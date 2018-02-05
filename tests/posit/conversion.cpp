@@ -7,25 +7,27 @@
 #include "stdafx.h"
 
 // if you want to trace the posit intermediate results
-//#define POSIT_VERBOSE_OUTPUT
+// #define POSIT_VERBOSE_OUTPUT
+#define POSIT_TRACE_CONVERT
 
+// minimum set of include files to reflect source code dependencies
 #include "../../posit/posit.hpp"
-#include "../../posit/posit_operators.hpp"
 #include "../../posit/posit_manipulators.hpp"
 #include "../tests/test_helpers.hpp"
 #include "../tests/posit_test_helpers.hpp"
 
 using namespace std;
+using namespace sw::unum;
 
 template<size_t nbits, size_t es>
 void GenerateLogicPattern(double input, const posit<nbits, es>& presult, const posit<nbits+1, es>& pnext) {
 	const int VALUE_WIDTH = 15;
-	bool fail = fabs(presult.to_double() - pnext.to_double()) > 0.000000001;
+	bool fail = presult != pnext;
 	value<52> v(input);
 	std::cout << setw(VALUE_WIDTH) << input << " "
 		<< " result " << setw(VALUE_WIDTH) << presult 
 		<< "  scale= " << std::setw(3) << presult.scale() 
-		<< "  k= " << std::setw(3) << presult.calculate_k(v.scale())
+		<< "  k= " << std::setw(3) << calculate_k<nbits, es>(v.scale())
 		<< "  exp= " << std::setw(3) << presult.get_exponent() << "  "
 		<< presult.get() << " " 
 		<< pnext.get() << " "
@@ -44,13 +46,20 @@ void GenerateLogicPatternsForDebug() {
 
 	// execute the test
 	int nrOfFailedTests = 0;
-	const double eps = 0.0000000001;  // TODO for big posits, eps is important to resolve differences
+	double minpos = minpos_value<nbits+1, es>();
+	double eps = 1.0e-10;
 	double da, input;
 	posit<nbits, es> pa;
 	std::cout << spec_to_string(pa) << std::endl;
 	for (int i = 0; i < NR_TEST_CASES; i++) {
 		pref.set_raw_bits(i);
-		da = pref.to_double();
+		da = double(pref);
+		if (i == 0) {
+			eps = minpos / 2.0;
+		}
+		else {
+			eps = da > 0 ? da * 1.0e-6 : da * -1.0e-6;
+		}	
 		if (i % 2) {
 			if (i == 1) {
 				// special case of projecting to +minpos
@@ -64,7 +73,6 @@ void GenerateLogicPatternsForDebug() {
 				pa = input;
 				std::cout << "p"; // indicate that this needs to 'project'
 				GenerateLogicPattern(input, pa, pnext);
-
 			}
 			else if (i == HALF - 1) {
 				// special case of projecting to +maxpos
@@ -148,7 +156,7 @@ void GenerateLogicPatternsForDebug() {
 // for most bugs they are traceable with _trace_conversion and _trace_add
 template<size_t nbits, size_t es>
 void GenerateTestCase(float input, float reference, const posit<nbits, es>& presult) {
-	if (fabs(presult.to_double() - reference) > 0.000000001) 
+	if (fabs(double(presult) - reference) > 0.000000001) 
 		ReportConversionError("test_case", "=", input, reference, presult);
 	else
 		ReportConversionSuccess("test_case", "=", input, reference, presult);
@@ -157,7 +165,7 @@ void GenerateTestCase(float input, float reference, const posit<nbits, es>& pres
 
 template<size_t nbits, size_t es>
 void GenerateTestCase(double input, double reference, const posit<nbits, es>& presult) {
-	if (fabs(presult.to_double() - reference) > 0.000000001)
+	if (fabs(double(presult) - reference) > 0.000000001)
 		ReportConversionError("test_case", "=", input, reference, presult);
 	else
 		ReportConversionSuccess("test_case", "=", input, reference, presult);
@@ -177,39 +185,31 @@ try {
 #if MANUAL_TESTING
 	// generate individual testcases to hand trace/debug
 	double input, reference;
-	
-#if PREVIOUS_FAILURE_INPUTS
-	posit<4, 1> p;
-	input = 0.0625f; reference = 0.0625f; 
-	input = 0.1249f; reference = 0.0625f;
-	input = 0.1251f; reference = 0.25f;
-	input = 0.249999999f; reference = 0.25f;
-	input = 4.000001f; reference = 4.0f;
-	posit<5, 2> p;
-	input = 32.0001; reference = 64; 
-	input = 63.9999; reference = 64; 
-	input = 128.0001; reference = 256;
-	input = 255.9999; reference = 256;
-	input = 256.0001; reference = 256;
-	input = 1023.9999; reference = 256;
-	input = 0.5; reference = 0.5;
-	input = 0.50001; reference = 0.5;
-	input = 0.74999; reference = 0.5;
-#endif
-	posit<4, 1> p;
-	input = 0.04; reference = 0.0625;
-	p = input;
+	double ONEMEG = 1024.0 * 1024.0;
+	double FOURMEG = 4.0 * ONEMEG;
+	double SIXTEENMEG = 16.0 * ONEMEG;
+	input = FOURMEG + 1.0;
+	posit<8, 2> p(input);
+	reference = SIXTEENMEG;
 	GenerateTestCase(input, reference, p);
-	//return 0;
+	
+
 	// manual exhaustive testing
 	tag = "Manual Testing";
 
-	GenerateLogicPatternsForDebug<3, 0>();
-	GenerateLogicPatternsForDebug<4, 0>();	
-	GenerateLogicPatternsForDebug<4, 1>();
-	GenerateLogicPatternsForDebug<5, 1>();
+	//GenerateLogicPatternsForDebug<3, 0>();
+	//GenerateLogicPatternsForDebug<4, 0>();	
+	//GenerateLogicPatternsForDebug<4, 1>();
+	//GenerateLogicPatternsForDebug<5, 1>();
+	//GenerateLogicPatternsForDebug<5, 2>();
 	//GenerateLogicPatternsForDebug<6, 2>();
 	//GenerateLogicPatternsForDebug<7, 3>();
+	//GenerateLogicPatternsForDebug<8, 0>();
+	//GenerateLogicPatternsForDebug<8, 1>();
+	//GenerateLogicPatternsForDebug<8, 2>();
+	//return 0;
+
+	nrOfFailedTestCases += ReportTestResult(ValidateConversion<3, 0>(tag, true), "posit<3,0>", "conversion");
 	return 0;
 
 	nrOfFailedTestCases += ReportTestResult(ValidateConversion<4, 1>(tag, true), "posit<4,1>", "conversion");
@@ -271,8 +271,12 @@ try {
 
 	return (nrOfFailedTestCases > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
 }
-catch (char* msg) {
+catch (char const* msg) {
 	cerr << msg << endl;
+	return EXIT_FAILURE;
+}
+catch (...) {
+	cerr << "Caught unknown exception" << endl;
 	return EXIT_FAILURE;
 }
 

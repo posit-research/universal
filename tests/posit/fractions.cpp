@@ -8,12 +8,11 @@
 
 #include "../../bitset/bitset_helpers.hpp"
 #include "../../posit/posit.hpp"
-#include "../../posit/posit_operators.hpp"
 #include "../../posit/posit_manipulators.hpp"
 #include "../tests/test_helpers.hpp"
 
 using namespace std;
-
+using namespace sw::unum;
 
 template<size_t fbits>
 void ReportError(std::string test_case, std::string op, double input, double reference, const fraction<fbits>& _fraction) {
@@ -74,8 +73,21 @@ int ValidateFixedPointNumber(std::string tag, bool bReportIndividualTestCases)
 	return nrOfFailedTests;
 }
 
+template<size_t fbits>
+int ValidateRoundingAssessment(std::string tag, bool bReportIndividualTestCases) {
+	int nrOfFailedTests = 0;
 
-#define MANUAL_TESTING 0
+	fraction<fbits> _fraction;
+	std::bitset<fbits> bits = convert_to_bitset<fbits, uint32_t>(0x50);
+	for (unsigned i = 0; i < fbits; i++) {
+		bool rb = _fraction.assign2(i, bits);
+		cout << "nf = " << i << " " << bits << " fraction " << _fraction << " " << (rb ? "up" : "dn") << endl;
+	}
+
+	return nrOfFailedTests;
+}
+
+#define MANUAL_TESTING 1
 #define STRESS_TESTING 0
 
 int main(int argc, char** argv)
@@ -87,6 +99,7 @@ try {
 #if MANUAL_TESTING
 	// generate individual testcases to hand trace/debug
 	ValidateFixedPointNumber<4>("Hello", true);
+	ValidateRoundingAssessment<8>("", true);
 
 #else
 
@@ -124,7 +137,11 @@ try {
 
 	return (nrOfFailedTestCases > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
 }
-catch (char* msg) {
+catch (char const* msg) {
 	cerr << msg << endl;
+	return EXIT_FAILURE;
+}
+catch (...) {
+	cerr << "Caught unknown exception" << endl;
 	return EXIT_FAILURE;
 }

@@ -8,12 +8,17 @@
 #include <sstream>
 #include <vector>
 
+#define POSIT_VERBOSE_OUTPUT
+#define POSIT_TRACE_DECODE
+
+// minimum set of include files to reflect source code dependencies
 #include "../../posit/posit.hpp"
-#include "../../posit/posit_operators.hpp"
 #include "../tests/test_helpers.hpp"
 #include "../tests/posit_test_helpers.hpp"
 
 using namespace std;
+using namespace sw::unum;
+
 
 /*
   Posit values are a combination of
@@ -36,7 +41,7 @@ int ValidateDecode() {
 	posit<4, 0> pa;
 	for (int i = 0; i < NR_TEST_CASES; i++) {
 		pa.set_raw_bits(uint64_t(i));
-		if (fabs(pa.to_double() - golden_values[i]) > 0.0001) {
+		if (fabs(double(pa) - golden_values[i]) > 0.0001) {
 			ReportDecodeError("Posit<4,0> decode failed: ", pa, golden_values[i]);
 			nrOfFailedTestCases++;
 		}
@@ -55,7 +60,11 @@ try {
 
 	return (nrOfFailedTestCases > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
 }
-catch (char* msg) {
+catch (char const* msg) {
 	cerr << msg << endl;
+	return EXIT_FAILURE;
+}
+catch (...) {
+	cerr << "Caught unknown exception" << endl;
 	return EXIT_FAILURE;
 }

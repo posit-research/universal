@@ -8,10 +8,10 @@
 #include <sstream>
 
 #include "../../posit/posit.hpp"
-#include "../../posit/posit_operators.hpp"
 #include "../../posit/posit_manipulators.hpp"
 
 using namespace std;
+using namespace sw::unum;
 
 /*
   Generator of a single lookup table for reciprocals of any posit configuration with 16 or fewer bits.
@@ -24,7 +24,7 @@ void GeneratePositReciprocalLookupTable(std::ostream& os) {
 	double v,rv;
 	for (size_t i = 0; i < NR_OF_ENTRIES; i++) {
 		p.set_raw_bits(i);
-		v = p.to_double();
+		v = double(p);
 		rv = 1.0 / v;
 		r = rv;
 		// os << p << " reciprocal of " << v << " is " << rv << " : " << r << std::endl;
@@ -44,7 +44,11 @@ try {
 
 	return (nrOfFailedTestCases > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
 }
-catch (char* msg) {
+catch (char const* msg) {
 	cerr << msg << endl;
+	return EXIT_FAILURE;
+}
+catch (...) {
+	cerr << "Caught unknown exception" << endl;
 	return EXIT_FAILURE;
 }

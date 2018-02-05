@@ -1,23 +1,22 @@
 // 64bit_posit.cpp: Functionality tests for standard 64-bit posits
 //
-// Copyright (C) 2017 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
 #include "stdafx.h"
 
 #include <vector>
+#include <posit>
 
-#include "../../posit/posit.hpp"
-#include "../../posit/posit_operators.hpp"
-#include "../../posit/posit_manipulators.hpp"
 #include "../tests/test_helpers.hpp"
 #include "../tests/posit_test_helpers.hpp"
 
 using namespace std;
+using namespace sw::unum;
 
 /*
-Standard posits with nbits = 64 have 3 exponent bits.
+Standard posit with nbits = 64 have es = 3 exponent bits.
 */
 
 int main(int argc, char** argv)
@@ -32,22 +31,23 @@ try {
 	std::string tag = " posit<64,3>";
 
 	cout << "Standard posit<64,3> configuration tests" << endl;
+
 	posit<nbits, es> p;
 	cout << spec_to_string(p) << endl << endl;
 
-	cout << "Arithmetic test randoms" << endl;
-	cout << "Addition      :                 " << RND_TEST_CASES << " randoms" << endl;
-	nrOfFailedTestCases += ReportTestResult(ValidateThroughRandoms<64, 3>(tag, bReportIndividualTestCases, OPCODE_ADD, RND_TEST_CASES), tag, "addition      ");
-	cout << "Subtraction   :                 " << RND_TEST_CASES << " randoms" << endl;
-	nrOfFailedTestCases += ReportTestResult(ValidateThroughRandoms<64, 3>(tag, bReportIndividualTestCases, OPCODE_SUB, RND_TEST_CASES), tag, "subtraction   ");
-	cout << "Multiplication:                 " << RND_TEST_CASES << " randoms" << endl;
-	nrOfFailedTestCases += ReportTestResult(ValidateThroughRandoms<64, 3>(tag, bReportIndividualTestCases, OPCODE_MUL, RND_TEST_CASES), tag, "multiplication");
-	//cout << "Division      :                 " << RND_TEST_CASES << " randoms" << endl;
-	//nrOfFailedTestCases += ReportTestResult(ValidateThroughRandoms<64, 3>(tag, bReportIndividualTestCases, OPCODE_DIV, RND_TEST_CASES), tag, "division      ");
+	cout << "Arithmetic tests " << RND_TEST_CASES << " randoms each" << endl;
+	nrOfFailedTestCases += ReportTestResult(ValidateThroughRandoms<nbits, es>(tag, bReportIndividualTestCases, OPCODE_ADD, RND_TEST_CASES), tag, "addition      ");
+	nrOfFailedTestCases += ReportTestResult(ValidateThroughRandoms<nbits, es>(tag, bReportIndividualTestCases, OPCODE_SUB, RND_TEST_CASES), tag, "subtraction   ");
+	nrOfFailedTestCases += ReportTestResult(ValidateThroughRandoms<nbits, es>(tag, bReportIndividualTestCases, OPCODE_MUL, RND_TEST_CASES), tag, "multiplication");
+	nrOfFailedTestCases += ReportTestResult(ValidateThroughRandoms<nbits, es>(tag, bReportIndividualTestCases, OPCODE_DIV, RND_TEST_CASES), tag, "division      ");
 
 	return (nrOfFailedTestCases > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
 }
-catch (char* msg) {
+catch (char const* msg) {
 	cerr << msg << endl;
+	return EXIT_FAILURE;
+}
+catch (...) {
+	cerr << "Caught unknown exception" << endl;
 	return EXIT_FAILURE;
 }

@@ -6,10 +6,14 @@
 
 #include "stdafx.h"
 
-#include "../../posit/posit.hpp"
-#include "../../posit/posit_operators.hpp"
+#include "../../bitset/bitset_helpers.hpp"
+#include "../../posit/exceptions.hpp"
+#include "../../posit/trace_constants.hpp"
+#include "../../posit/bit_functions.hpp"
+#include "../../posit/value.hpp"
 
 using namespace std;
+using namespace sw::unum;
 
 void TestConversionResult(bool bValid, string descriptor)
 {
@@ -38,7 +42,7 @@ bool ValidateValue() {
 	for (int i = 0; i < NR_TEST_CASES; i++) {
 		value<fbits> v;
 		v = input[i];
-		if (fabs(v.to_double() - golden_answer[i]) > 0.00000001) {
+		if (fabs(double(v) - golden_answer[i]) > 0.00000001) {
 			cerr << "FAIL [" << setw(2) << i << "] input " << input[i] << " ref = " << golden_answer[i] << " != " << setw(5) << v << endl;
 			bValid = false;
 		}
@@ -46,12 +50,17 @@ bool ValidateValue() {
 	for (int i = 2; i < NR_TEST_CASES; i++) {
 		value<fbits> v;
 		v = 1.0 / input[i];
-		if (fabs(v.to_double() - (1.0 / golden_answer[i])) > 0.00000001) {
+		if (fabs(double(v) - (1.0 / golden_answer[i])) > 0.00000001) {
 			cerr << "FAIL [" << setw(2) << NR_TEST_CASES + i << "] input " << 1.0 / input[i] << " ref = " << 1.0 / golden_answer[i] << " != " << setw(5) << v << endl;
 			bValid = false;
 		}
 	}
 	return bValid;
+}
+
+template<size_t fbits>
+void PrintValue(float f, const value<fbits>& v) {
+	cout << "float: " << setw(fbits) << f << components(v) << endl;
 }
 
 int main()
@@ -63,7 +72,7 @@ try {
 	cout << v1 << endl;
 	cout << v2 << endl;
 
-	int64_t n1, n2;
+	long long n1, n2;
 	n1 =  1234567890123456;
 	n2 = -123456789012345;
 	v1 = n1;
@@ -77,9 +86,61 @@ try {
 	cout << "Value configuration validation" << endl;
 	TestConversionResult(ValidateValue<8>(), "value<8>");
 
+	cout << "Conversion values of importance" << endl;
+	/*
+	no exp left : geo-dw d          0.125  result          0.0625  scale = -4  k = -2  exp = -  0001 00010          0.0625     PASS
+	no rounding alltaken u          0.125  result             0.5  scale = -1  k = -1  exp = 1  0011 00100            0.25 FAIL
+	no rounding alltaken u           0.25  result               1  scale =  0  k = -1  exp = 0  0100 00100            0.25 FAIL
+	no rounding alltaken d           0.25  result            0.25  scale = -2  k = -1  exp = 0  0010 00100            0.25     PASS
+	no rounding alltaken u          -0.25  result           -0.25  scale=  -2  k=  -1  exp=   0  1110 11100           -0.25     PASS
+	no rounding alltaken d          -0.25  result              -1  scale=   0  k=  -1  exp=   0  1100 11100           -0.25 FAIL
+	no rounding alltaken d         -0.125  result            -0.5  scale=  -1  k=  -1  exp=   1  1101 11100           -0.25 FAIL
+	no exp left:  geo-dw u         -0.125  result         -0.0625  scale=  -4  k=  -2  exp=   -  1111 11110         -0.0625     PASS
+	*/
+	float f;
+	value<23> v;
+	f =  0.12499f; v = f; PrintValue(f, v);
+	f =  0.12500f; v = f; PrintValue(f, v);
+	f =  0.12501f; v = f; PrintValue(f, v);
+	f =  0.24999f; v = f; PrintValue(f, v);
+	f =  0.25000f; v = f; PrintValue(f, v);
+	f =  0.25001f; v = f; PrintValue(f, v);
+	f = -0.25001f; v = f; PrintValue(f, v);
+	f = -0.25000f; v = f; PrintValue(f, v);
+	f = -0.24999f; v = f; PrintValue(f, v);
+	f = -0.12501f; v = f; PrintValue(f, v);
+	f = -0.12500f; v = f; PrintValue(f, v);
+	f = -0.12499f; v = f; PrintValue(f, v);
+
+	cout << "Rounding" << endl;
+	std::bitset<8> fraction;
+	fraction = 0x55;
+	value<8> r8(false, 0, fraction, false, false);
+	cout << "Value is " << r8 << " components are " << components(r8) << endl;
+	value<7> r7 = r8.round_to<7>();
+	cout << "Value is " << r7 << " components are " << components(r7) << endl;
+	value<6> r6 = r8.round_to<6>();
+	cout << "Value is " << r6 << " components are " << components(r6) << endl;
+	value<5> r5 = r8.round_to<5>();
+	cout << "Value is " << r5 << " components are " << components(r5) << endl;
+	value<4> r4 = r8.round_to<4>();
+	cout << "Value is " << r4 << " components are " << components(r4) << endl;
+	value<3> r3 = r8.round_to<3>();
+	cout << "Value is " << r3 << " components are " << components(r3) << endl;
+	value<2> r2 = r8.round_to<2>();
+	cout << "Value is " << r2 << " components are " << components(r2) << endl;
+	value<1> r1 = r8.round_to<1>();
+	cout << "Value is " << r1 << " components are " << components(r1) << endl;
+	value<0> r0 = r8.round_to<0>();
+	cout << "Value is " << r0 << " components are " << components(r0) << endl;
+
 	return (nrOfFailedTestCases > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
 }
-catch (char* msg) {
+catch (char const* msg) {
 	cerr << msg << endl;
+	return EXIT_FAILURE;
+}
+catch (...) {
+	cerr << "Caught unknown exception" << endl;
 	return EXIT_FAILURE;
 }

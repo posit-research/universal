@@ -7,16 +7,17 @@
 #include "stdafx.h"
 
 #include "../../posit/posit.hpp"
-#include "../../posit/posit_operators.hpp"
 #include "../../posit/posit_manipulators.hpp"
 #include "../tests/test_helpers.hpp"
 
 using namespace std;
+using namespace sw::unum;
+
 
 /*
 Regime range example for a posit<6,es>
-     regime      scale
-     00000          ~   value is either 0 or inf
+	 regime      scale
+	 00000          ~   associated with either 0 or NaR (Not a Real)
 	 00001         -4
 	 0001-         -3
 	 001--         -2
@@ -33,13 +34,13 @@ int ValidateRegimeOperations(std::string tag, bool bReportIndividualTestCases) {
 	int nrOfFailedTestCases = 0;
 
 	regime<nbits, es> r;
-	for (int k = -NR_TEST_CASES; k < NR_TEST_CASES+1; k++) {
+	for (int k = -NR_TEST_CASES; k < NR_TEST_CASES + 1; k++) {
 		int reference = r.regime_size(k);
-		int nrRegimeBits = r.assign_regime_pattern(k);	
+		size_t nrRegimeBits = r.assign_regime_pattern(k);
 		if (nrRegimeBits != reference) {
 			nrOfFailedTestCases++;
 			if (bReportIndividualTestCases) cout << "FAIL: k = " << setw(3) << k << " regime is " << r << " bits " << nrRegimeBits << " reference " << reference << endl;
-		}	
+		}
 		else {
 			//if (bReportIndividualTestCases) cout << "PASS: k = " << setw(3) << k << " regime is " << r << " bits " << nrRegimeBits << " reference " << reference << endl;
 		}
@@ -64,7 +65,7 @@ int ValidateInwardProjection(std::string tag, bool bReportIndividualTestCases) {
 		if (inward != reference) {
 			nrOfFailedTests++;
 			cout << "FAIL : k = " << setw(3) << k << " scale = " << setw(3) << scale << " inward projection range " << inward << " reference " << reference << endl;
-		}	
+		}
 		cout << "k = " << setw(3) << k << " scale = " << setw(3) << scale << " inward projection range " << inward << endl;
 
 	}
@@ -76,20 +77,24 @@ int ValidateRegimeScales(std::string tag, bool bReportIndividualTestCases) {
 	int nrOfFailedTests = 0;
 	int useed_scale = int(1) << es;  // int because we are doing int math with it
 
-	regime<nbits, es> r1, r2;
+	regime<nbits, es> r1;
 	posit<nbits, es> p; // for check_inward_projection_range
 	// scale represents the binary scale of a value to test
 	int size = int(nbits);
 	for (int k = (-size + 1); k <= (size - 1); k++) {
 		int scale = k*useed_scale;
-		r1.assign_from_scale(scale);
-		r2.assign_regime_pattern(k);
-		if (r1 != r2) {
+		r1.assign_regime_pattern(k);
+		if (r1.scale() != scale) {
+			if (p.check_inward_projection_range(scale)) {
+				if (r1.scale() == (k - 1)*useed_scale || r1.scale() == (k + 1)*useed_scale) {
+					continue;
+				}
+			}	
 			nrOfFailedTests++;
-			std::cout << "k = " << setw(3) << k 
-				<< " scale = " << setw(3) << scale 
-				<< " calc k " << setw(3) << r1.calculate_k_value(scale) 
-				<< " bits " << r1 << ":" << r2 
+			std::cout << "k = " << setw(3) << k
+				<< " scale = " << setw(3) << scale
+				<< " calc k " << setw(3) << r1.regime_k()
+				<< " bits " << r1 << ":scale=" << r1.scale()
 				<< " clamp " << p.check_inward_projection_range(scale) << std::endl;
 		}
 
@@ -131,8 +136,6 @@ try {
 	nrOfFailedTestCases += ReportTestResult(ValidateInwardProjection<6, 3>(tag, bReportIndividualTestCases), "posit<6,3>", "regimes");
 
 #else
-	ReportPositScales();
-
 	cout << "Regime tests" << endl;
 
 	// TEST REGIME DECODE
@@ -200,7 +203,11 @@ try {
 
 	return (nrOfFailedTestCases > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
 }
-catch (char* msg) {
+catch (char const* msg) {
 	cerr << msg << endl;
+	return EXIT_FAILURE;
+}
+catch (...) {
+	cerr << "Caught unknown exception" << endl;
 	return EXIT_FAILURE;
 }

@@ -7,10 +7,10 @@
 #include "stdafx.h"
 
 #include "../../posit/posit.hpp"
-#include "../../posit/posit_operators.hpp"
 #include "../../posit/posit_manipulators.hpp"
 
 using namespace std;
+using namespace sw::unum;
 
 template<size_t es>
 int ValidateExponentOperations() {
@@ -34,12 +34,13 @@ try {
 	cout << "Manual Exponent tests" << endl;
 	constexpr size_t nbits = 6;
 	constexpr size_t es = 2;
+	posit<nbits, es> p; // for calculate_k method
 	regime<nbits, es> r;
 	exponent<nbits, es> e;
 	for (int scale = -16; scale < 17; scale++) {
-		int k = r.calculate_k_value(scale);
-		int regime_size = r.assign_regime_pattern(scale >> es);
-		int exp_size = e.assign_exponent_bits(scale, k, regime_size);
+		int k = calculate_k<nbits, es>(scale);
+		size_t regime_size = r.assign_regime_pattern(scale >> es);
+		size_t exp_size = e.assign_exponent_bits(scale, k, regime_size);
 		if (scale < 0) {
 			cout << "in value = " << setw(12) << 1.0/(unsigned(1) << -scale) << " scale = " << setw(3) << scale << " r(" << r << ")  e(" << e << ")     projected value " << r.value() * e.value() << endl;
 		}
@@ -58,7 +59,11 @@ try {
 
 	return (nrOfFailedTestCases > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
 }
-catch (char* msg) {
+catch (char const* msg) {
 	cerr << msg << endl;
+	return EXIT_FAILURE;
+}
+catch (...) {
+	cerr << "Caught unknown exception" << endl;
 	return EXIT_FAILURE;
 }

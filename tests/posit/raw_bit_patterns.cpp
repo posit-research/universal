@@ -8,9 +8,9 @@
 #include <sstream>
 
 #include "../../posit/posit.hpp"
-#include "../../posit/posit_operators.hpp"
 
 using namespace std;
+using namespace sw::unum;
 
 /* OUTPUT
 72057594037927936
@@ -54,7 +54,7 @@ try {
 	raw.reset();
 	// positive regime infinity - 1
 	cout << setprecision(34);
-	raw[15] = 1;							// inf
+	raw[15] = 1;							// NaR (Not a Real)
 	p.set(raw); 	cout << p << endl;
 	raw.set();
 	raw[15] = false;						// 72057594037927936			
@@ -133,7 +133,11 @@ try {
 
 	return (nrOfFailedTestCases > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
 }
-catch (char* msg) {
+catch (char const* msg) {
 	cerr << msg << endl;
+	return EXIT_FAILURE;
+}
+catch (...) {
+	cerr << "Caught unknown exception" << endl;
 	return EXIT_FAILURE;
 }

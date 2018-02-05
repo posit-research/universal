@@ -7,9 +7,9 @@
 #include "stdafx.h"
 
 #include "../../posit/posit.hpp"
-#include "../../posit/posit_operators.hpp"
 
 using namespace std;
+using namespace sw::unum;
 
 int main()
 try {
@@ -35,9 +35,9 @@ try {
 	// exponent component of the posit
 	exponent<nbits, es> test_exponent;
 	for (int scale = -bound; scale < bound; scale++) {
-		int k = test_regime.calculate_k_value(scale);
-		unsigned int nrOfRegimeBits = test_regime.assign_regime_pattern(k);
-		unsigned int nrOfExponentBits = test_exponent.assign_exponent_bits(scale, k, nrOfRegimeBits);
+		int k = calculate_k<nbits, es>(scale);
+		size_t nrOfRegimeBits = test_regime.assign_regime_pattern(k);
+		size_t nrOfExponentBits = test_exponent.assign_exponent_bits(scale, k, nrOfRegimeBits);
 		cout << "scale " << setw(4) << scale << " k " << setw(2) << k << " " << test_regime << " " << test_exponent << endl;
 	}
 
@@ -47,19 +47,23 @@ try {
 	_fraction.set(nbits - 4, false);
 	_fraction.set(nbits - 5, true);
 	fraction<nbits-2> test_fraction;
-	unsigned int nrOfFractionBits = 3;
+	size_t nrOfFractionBits = 3;
 	test_fraction.set(_fraction, nrOfFractionBits);	
 	for (int scale = -bound; scale < bound; scale++) {
-		int k = test_regime.calculate_k_value(scale);;
-		unsigned int nrOfRegimeBits = test_regime.assign_regime_pattern(k);
-		unsigned int nrOfExponentBits = test_exponent.assign_exponent_bits(scale, k, nrOfRegimeBits);
+		int k = calculate_k<nbits, es>(scale);;
+		size_t nrOfRegimeBits = test_regime.assign_regime_pattern(k);
+		size_t nrOfExponentBits = test_exponent.assign_exponent_bits(scale, k, nrOfRegimeBits);
 
 		cout << "scale " << setw(4) << scale << " k " << setw(2) << k << " " << test_regime << " " << test_exponent << " " << test_fraction << endl;
 	}
 	return (nrOfFailedTestCases > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
 }
-catch (char* msg) {
+catch (char const* msg) {
 	cerr << msg << endl;
+	return EXIT_FAILURE;
+}
+catch (...) {
+	cerr << "Caught unknown exception" << endl;
 	return EXIT_FAILURE;
 }
 

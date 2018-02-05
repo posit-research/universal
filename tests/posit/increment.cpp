@@ -10,17 +10,37 @@
 
 #include "../../bitset/bitset_helpers.hpp"
 #include "../../posit/posit.hpp"
-#include "../../posit/posit_operators.hpp"
 #include "../../posit/posit_manipulators.hpp"
 #include "../tests/test_helpers.hpp"
 #include "../tests/posit_test_helpers.hpp"
 
 using namespace std;
+using namespace sw::unum;
+
+#define MANUAL_TESTING 0
+#define STRESS_TESTING 0
 
 int main(int argc, char** argv)
 try {
-	bool bReportIndividualTestCases = false;
+	bool bReportIndividualTestCases = true;
 	int nrOfFailedTestCases = 0;
+
+#if MANUAL_TESTING
+	const size_t nbits = 5;
+	const size_t es = 0;
+	const std::string positConfig = "posit<5,0>";
+	std::vector< posit<nbits,es> > set;
+	GenerateOrderedPositSet<nbits, es>(set);
+	for (typename std::vector< posit<nbits, es> >::iterator it = set.begin(); it != set.end(); it++) {
+		std::cout << it->get() << " " << *it << std::endl;
+	}
+
+	nrOfFailedTestCases += ReportTestResult(ValidateIncrement<nbits, es>("Increment failed", bReportIndividualTestCases), positConfig, "operator++");
+
+#else
+	// Note: increment/decrement depend on the 2's complement ordering of the posit encoding
+	// This implies that this functionality is independent of the <nbits,es> configuration of the posit.
+	// Otherwise stated, an enumeration of tests for different posit configurations is a bit superfluous.
 
 	// INCREMENT tests
 	cout << endl << "INCREMENT tests" << endl;
@@ -42,11 +62,16 @@ try {
 	nrOfFailedTestCases += ReportTestResult(ValidateIncrement<7, 1>("Increment failed", bReportIndividualTestCases), "posit<7,1>", "operator++");
 	nrOfFailedTestCases += ReportTestResult(ValidateIncrement<7, 2>("Increment failed", bReportIndividualTestCases), "posit<7,2>", "operator++");
 	nrOfFailedTestCases += ReportTestResult(ValidateIncrement<7, 3>("Increment failed", bReportIndividualTestCases), "posit<7,3>", "operator++");
+	nrOfFailedTestCases += ReportTestResult(ValidateIncrement<7, 4>("Increment failed", bReportIndividualTestCases), "posit<7,4>", "operator++");
 
 	nrOfFailedTestCases += ReportTestResult(ValidateIncrement<8, 0>("Increment failed", bReportIndividualTestCases), "posit<8,0>", "operator++");
 	nrOfFailedTestCases += ReportTestResult(ValidateIncrement<8, 1>("Increment failed", bReportIndividualTestCases), "posit<8,1>", "operator++");
 	nrOfFailedTestCases += ReportTestResult(ValidateIncrement<8, 2>("Increment failed", bReportIndividualTestCases), "posit<8,2>", "operator++");
 	nrOfFailedTestCases += ReportTestResult(ValidateIncrement<8, 3>("Increment failed", bReportIndividualTestCases), "posit<8,3>", "operator++");
+	nrOfFailedTestCases += ReportTestResult(ValidateIncrement<8, 4>("Increment failed", bReportIndividualTestCases), "posit<8,4>", "operator++");
+	nrOfFailedTestCases += ReportTestResult(ValidateIncrement<8, 5>("Increment failed", bReportIndividualTestCases), "posit<8,5>", "operator++");
+
+#endif // MANUAL_TESTING
 
 	if (argc == 2 && std::string(argv[1]) == std::string("-l")) {
 		// AD/DA adapted data path configurations
@@ -83,7 +108,11 @@ try {
 
 	return (nrOfFailedTestCases > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
 }
-catch (char* msg) {
+catch (char const* msg) {
 	cerr << msg << endl;
+	return EXIT_FAILURE;
+}
+catch (...) {
+	cerr << "Caught unknown exception" << endl;
 	return EXIT_FAILURE;
 }

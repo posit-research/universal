@@ -5,7 +5,10 @@
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
-// template class representing the regime
+namespace sw {
+namespace unum {
+
+// template class representing the regime using <nbits,es> of the containing posit
 template<size_t nbits, size_t es>
 class regime {
 public:
@@ -22,21 +25,20 @@ public:
 		_RegimeBits = 0;
 		_Bits.reset();
 	}
-	unsigned int nrBits() const {
+	size_t nrBits() const {
 		return _RegimeBits;
 	}
 	int scale() const {
-		return int(_k) << es;
+		return _k > 0 ? int(_k) * (1 << es) : -(int(-_k) * (1 << es));
 	}
-	int maxpos_scale() {
-		return (nbits - 2) * (1 << es);
-	}
-	int minpos_scale() {
-		return static_cast<int>(2 - nbits) * (1 << es);
-	}
+
 	// return the k-value of the regime: useed ^ k
-	int regime_k() const {
+	inline int regime_k() const {
 		return _k;
+	}
+	// the length of the run of the regime
+	inline int regime_run() const {
+		return _run;
 	}
 	double value() const {
 		double scale;
@@ -60,16 +62,16 @@ public:
 	std::bitset<nbits - 1> get() const {
 		return _Bits;
 	}
-	void set(const std::bitset<nbits - 1>& raw, unsigned int nrOfRegimeBits) {
+	void set(const std::bitset<nbits - 1>& raw, size_t nrOfRegimeBits) {
 		_Bits = raw;
 		_RegimeBits = nrOfRegimeBits;
 	}
-	void setZero() {
+	void setToZero() {
 		_Bits.reset();
 		_RegimeBits = nbits - 1;
 		_k = 1 - static_cast<int>(nbits);   // by design: this simplifies increment/decrement
 	}
-	void setInfinite() {
+	void setToInfinite() {
 		_Bits.reset();
 		_RegimeBits = nbits - 1;
 		_k = static_cast<int>(nbits) - 1;   // by design: this simplifies increment/decrement
@@ -79,27 +81,21 @@ public:
 		if (k < 0) k = -k - 1;
 		return (k < nbits - 2 ? k + 2 : nbits - 1);
 	}
-	// calculate the unconstrained k factor
-	int calculate_k_value(int scale) const {
-		int k = scale < 0 ? -(-scale >> es) - 1 : (scale >> es);
-		return k;
-	}
-	unsigned int assign_from_scale(int scale) {
-		// constrain the scale to range [minpos, maxpos]
-		if (scale < 0) {
-			scale = scale > minpos_scale() ? scale : minpos_scale();
-		}
-		else {
-			scale = scale < maxpos_scale() ? scale : maxpos_scale();
-		}
-		return assign_regime_pattern(calculate_k_value(scale));
+	size_t assign(int scale) {
+		bool r = scale > 0;
+		_k = calculate_k<nbits,es>(scale);
+		_run = (r ? 1 + (scale >> es) : -scale >> es);
+		r ? _Bits.set() : _Bits.reset();
+		_Bits.set(nbits - 1 - _run - 1, 1 ^ r); // termination bit		
+		_RegimeBits = _run + 1;
+		return _RegimeBits;
 	}
 	// construct the regime bit pattern given a number's useed scale, that is, k represents the useed factors of the number
 	// k is the unifying abstraction between decoding a posit and converting a float value.
 	// Return the number of regime bits. 
-	// Usage example: say value is 1024 -> sign = false (not negative), scale is 10: assign_regime_pattern(false, scale >> es)
+	// Usage example: say value is 1024 -> sign = false (not negative), scale is 10: assign_regime_pattern(scale >> es)
 	// because useed = 2^es and thus a value of scale 'scale' will contain (scale >> es) number of useed factors
-	unsigned int assign_regime_pattern(int k) {
+	size_t assign_regime_pattern(int k) {
 		if (k < 0) { // south-east quadrant: patterns 00001---
 			_k = int8_t(-k < nbits - 2 ? k : -(static_cast<int>(nbits) - 2)); // constrain regime to minpos
 			k = -_k - 1;
@@ -139,8 +135,9 @@ public:
 	}
 private:
 	std::bitset<nbits - 1>	_Bits;
-	int8_t					_k;
-	unsigned int			_RegimeBits;
+	signed char				_k;
+	unsigned char			_run;
+	size_t					_RegimeBits;
 
 	// template parameters need names different from class template parameters (for gcc and clang)
 	template<size_t nnbits, size_t ees>
@@ -161,3 +158,41 @@ private:
 	template<size_t nnbits, size_t ees>
 	friend bool operator>=(const regime<nnbits, ees>& lhs, const regime<nnbits, ees>& rhs);
 };
+
+/////////////////  REGIME operators
+template<size_t nbits, size_t es>
+inline std::ostream& operator<<(std::ostream& ostr, const regime<nbits, es>& r) {
+	unsigned int nrOfRegimeBitsProcessed = 0;
+	for (int i = nbits - 2; i >= 0; --i) {
+		if (r._RegimeBits > nrOfRegimeBitsProcessed++) {
+			ostr << (r._Bits[i] ? "1" : "0");
+		}
+		else {
+			ostr << "-";
+		}
+	}
+	return ostr;
+}
+
+template<size_t nbits, size_t es>
+inline std::istream& operator>> (std::istream& istr, const regime<nbits, es>& r) {
+	istr >> r._Bits;
+	return istr;
+}
+
+template<size_t nbits, size_t es>
+inline bool operator==(const regime<nbits, es>& lhs, const regime<nbits, es>& rhs) { return lhs._Bits == rhs._Bits && lhs._RegimeBits == rhs._RegimeBits; }
+template<size_t nbits, size_t es>
+inline bool operator!=(const regime<nbits, es>& lhs, const regime<nbits, es>& rhs) { return !operator==(lhs, rhs); }
+template<size_t nbits, size_t es>
+inline bool operator< (const regime<nbits, es>& lhs, const regime<nbits, es>& rhs) { return lhs._RegimeBits == rhs._RegimeBits && lhs._Bits < rhs._Bits; }
+template<size_t nbits, size_t es>
+inline bool operator> (const regime<nbits, es>& lhs, const regime<nbits, es>& rhs) { return  operator< (rhs, lhs); }
+template<size_t nbits, size_t es>
+inline bool operator<=(const regime<nbits, es>& lhs, const regime<nbits, es>& rhs) { return !operator> (lhs, rhs); }
+template<size_t nbits, size_t es>
+inline bool operator>=(const regime<nbits, es>& lhs, const regime<nbits, es>& rhs) { return !operator< (lhs, rhs); }
+
+}  // namespace unum
+
+}  // namespace sw

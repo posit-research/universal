@@ -8,24 +8,27 @@
 #include <sstream>
 
 #include "../../posit/posit.hpp"
-#include "../../posit/posit_operators.hpp"
 
 using namespace std;
+using namespace sw::unum;
 
 template<size_t nbits, size_t es>
 void checkSpecialCases(posit<nbits, es> p) {
-	cout << "posit is " << (p.isZero() ? "zero " : "non-zero ") << (p.isPositive() ? "positive " : "negative ") << (p.isInfinite() ? "+-infinite" : "not infinite") << endl;
+	cout << "posit is " << (p.isZero() ? "zero " : "non-zero ") << (p.isPositive() ? "positive " : "negative ") << (p.isNaR() ? "Not a Real" : "Its a Real") << endl;
 }
 
 void BasicOperators() {
-	posit<16, 1> p1, p2, p3, p4, p5, p6;
+	const size_t nbits = 16;
+	const size_t es = 1;
+	posit<nbits, es> p1, p2, p3, p4, p5, p6;
 
-	double minpos = p1.minpos_value();
-	double maxpos = p1.maxpos_value();
+	double minpos = minpos_value<nbits, es>();
+	double maxpos = maxpos_value<nbits, es>();
 
-	p1 = 0;  checkSpecialCases(p1);
-	p1 = 1;  checkSpecialCases(p1);
-	p2 = 2;  checkSpecialCases(p2);
+	p1 = 0;
+	//p1 = (int8_t)-1;  TODO: this triggers an assert because the number of bits of the fraction of the input is smaller than nf in the conversion
+	p1 = 1;
+	p2 = 2;
 
 	p3 = p1 + p2;
 	p4 = p2 - p1;
@@ -57,8 +60,12 @@ try {
     
 	return (nrOfFailedTestCases > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
 }
-catch (char* msg) {
+catch (char const* msg) {
 	cerr << msg << endl;
+	return EXIT_FAILURE;
+}
+catch (...) {
+	cerr << "Caught unknown exception" << endl;
 	return EXIT_FAILURE;
 }
 
