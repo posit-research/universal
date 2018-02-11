@@ -10,17 +10,34 @@
 #include <iostream>
 #include <limits>
 
+// to yield a fast regression environment for productive development
+// we want to leverage the IEEE floating point hardware available on x86 and ARM.
+// Problem is that neither support a true IEEE 128bit long double.
+// x86 provides a irreproducible x87 80bit format that is susceptible to inconsistent results due to multi-programming
+// ARM only provides a 64bit double format.
+// This conditional section is intended to create a unification of a long double format across
+// different compilation environments that creates a fast verification environment through consistent hw support.
+// Another option is to use a multiprecision floating point emulation layer. 
+// Side note: the performance of the bitset<> manipulation is slower than a multiprecision floating point implementation
+// so this comment is talking about issues that will come to pass when we transition to a high performance sw emulation.
+
+// 128bit double-double
+struct __128bitdd {
+	double upper;
+	double lower;
+};
+
 #if defined(__clang__)
 /* Clang/LLVM. ---------------------------------------------- */
-typedef long double __quadruple;
+typedef __128bitdd double_double;
 
 #elif defined(__ICC) || defined(__INTEL_COMPILER)
 /* Intel ICC/ICPC. ------------------------------------------ */
-typedef long double __quadruple;
+typedef __128bitdd double_double;
 
 #elif defined(__GNUC__) || defined(__GNUG__)
 /* GNU GCC/G++. --------------------------------------------- */
-typedef long double quadruple;
+typedef __128bitdd double_double;
 
 #elif defined(__HP_cc) || defined(__HP_aCC)
 /* Hewlett-Packard C/aC++. ---------------------------------- */
@@ -30,7 +47,7 @@ typedef long double quadruple;
 
 #elif defined(_MSC_VER)
 /* Microsoft Visual Studio. --------------------------------- */
-typedef long double __quadruple;
+typedef __128bitdd double_double;
 
 #elif defined(__PGI)
 /* Portland Group PGCC/PGCPP. ------------------------------- */
@@ -65,6 +82,9 @@ template<size_t nbits, size_t es> posit<nbits, es> sqrt(const posit<nbits, es>& 
 // Not A Real is the posit encoding for INFINITY and arithmetic errors that can propagate
 // The symbol NAR can be used to initialize a posit, i.e., posit<nbits,es>(NAR), or posit<nbits,es> p = NAR
 #define NAR INFINITY
+
+// define to non-zero if you want to enable arithmetic and logic literals
+// POSIT_ENABLE_LITERALS
 
 /*
  class posit represents arbitrary configuration posits and their basic arithmetic operations (add/sub, mul/div)
@@ -262,6 +282,9 @@ public:
 		}
 		return *this;                
 	}
+	posit<nbits, es>& operator+=(double rhs) {
+		return *this += posit<nbits, es>(rhs);
+	}
 	posit<nbits, es>& operator-=(const posit& rhs) {
 		if (_trace_sub) std::cout << "---------------------- SUB -------------------" << std::endl;
 		// special case handling of the inputs
@@ -294,6 +317,9 @@ public:
 			convert(difference);
 		}
 		return *this;
+	}
+	posit<nbits, es>& operator-=(double rhs) {
+		return *this -= posit<nbits, es>(rhs);
 	}
 	posit<nbits, es>& operator*=(const posit& rhs) {
 		static_assert(fhbits > 0, "posit configuration does not support multiplication");
@@ -328,6 +354,9 @@ public:
 			convert(product);
 		}
 		return *this;
+	}
+	posit<nbits, es>& operator*=(double rhs) {
+		return *this *= posit<nbits, es>(rhs);
 	}
 	posit<nbits, es>& operator/=(const posit& rhs) {
 		if (_trace_div) std::cout << "---------------------- DIV -------------------" << std::endl;
@@ -367,6 +396,9 @@ public:
 		}
 
 		return *this;
+	}
+	posit<nbits, es>& operator/=(double rhs) {
+		return *this /= posit<nbits, es>(rhs);
 	}
 	posit<nbits, es>& operator++() {
 		increment_posit();
@@ -487,6 +519,7 @@ public:
 	int				   regime_k() const {
 		return _regime.regime_k();
 	}
+	int                get_scale() const { return _regime.scale() + _exponent.scale(); }
 	bool               get_sign() const { return _sign;  }
 	regime<nbits, es>  get_regime() const {
 		return _regime;
@@ -702,6 +735,14 @@ public:
 	}
 	void normalize(value<fbits>& v) const {
 		v.set(_sign, scale(), _fraction.get(), isZero(), isNaR());
+	}
+	template<size_t tgt_fbits>
+	void normalize_to(value<tgt_fbits>& v) const {
+		std::bitset<tgt_fbits> _fr;
+		std::bitset<fbits> _src = _fraction.get();
+		int tgt, src;
+		for (tgt = int(tgt_fbits) - 1, src = int(fbits) - 1; tgt >= 0, src >= 0; tgt--, src--) _fr[tgt] = _src[src];
+		v.set(_sign, scale(), _fr, isZero(), isNaR());
 	}
 	// collect the posit components into a bitset
 	std::bitset<nbits> collect() {
@@ -952,6 +993,7 @@ private:
 	template<size_t nnbits, size_t ees>
 	friend std::istream& operator>> (std::istream& istr, posit<nnbits, ees>& p);
 
+	// posit - posit logic functions
 	template<size_t nnbits, size_t ees>
 	friend bool operator==(const posit<nnbits, ees>& lhs, const posit<nnbits, ees>& rhs);
 	template<size_t nnbits, size_t ees>
@@ -964,9 +1006,42 @@ private:
 	friend bool operator<=(const posit<nnbits, ees>& lhs, const posit<nnbits, ees>& rhs);
 	template<size_t nnbits, size_t ees>
 	friend bool operator>=(const posit<nnbits, ees>& lhs, const posit<nnbits, ees>& rhs);
+
+#if POSIT_ENABLE_LITERALS
+	// posit - literal logic functions
+	// posit - int
+	template<size_t nnbits, size_t ees>
+	friend bool operator==(const posit<nnbits, ees>& lhs, int rhs);
+	template<size_t nnbits, size_t ees>
+	friend bool operator!=(const posit<nnbits, ees>& lhs, int rhs);
+	template<size_t nnbits, size_t ees>
+	friend bool operator< (const posit<nnbits, ees>& lhs, int rhs);
+	template<size_t nnbits, size_t ees>
+	friend bool operator> (const posit<nnbits, ees>& lhs, int rhs);
+	template<size_t nnbits, size_t ees>
+	friend bool operator<=(const posit<nnbits, ees>& lhs, int rhs);
+	template<size_t nnbits, size_t ees>
+	friend bool operator>=(const posit<nnbits, ees>& lhs, int rhs);
+	// posit - double
+	template<size_t nnbits, size_t ees>
+	friend bool operator==(const posit<nnbits, ees>& lhs, double rhs);
+	template<size_t nnbits, size_t ees>
+	friend bool operator!=(const posit<nnbits, ees>& lhs, double rhs);
+	template<size_t nnbits, size_t ees>
+	friend bool operator< (const posit<nnbits, ees>& lhs, double rhs);
+	template<size_t nnbits, size_t ees>
+	friend bool operator> (const posit<nnbits, ees>& lhs, double rhs);
+	template<size_t nnbits, size_t ees>
+	friend bool operator<=(const posit<nnbits, ees>& lhs, double rhs);
+	template<size_t nnbits, size_t ees>
+	friend bool operator>=(const posit<nnbits, ees>& lhs, double rhs);
+#endif // POSIT_ENABLE_LITERALS
+
 };
 
 ////////////////// POSIT operators
+
+// stream operators
 template<size_t nbits, size_t es>
 inline std::ostream& operator<<(std::ostream& ostr, const posit<nbits, es>& p) {
 	if (p.isZero()) {
@@ -981,63 +1056,178 @@ inline std::ostream& operator<<(std::ostream& ostr, const posit<nbits, es>& p) {
 	return ostr;
 }
 
+// TODO: this needs an implementation
 template<size_t nbits, size_t es>
 inline std::istream& operator>> (std::istream& istr, const posit<nbits, es>& p) {
 	istr >> p._Bits;
 	return istr;
 }
 
+// posit - posit binary logic operators
 template<size_t nbits, size_t es>
-inline bool operator==(const posit<nbits, es>& lhs, const posit<nbits, es>& rhs) { 
+inline bool operator==(const posit<nbits, es>& lhs, const posit<nbits, es>& rhs) {
 	return lhs._raw_bits == rhs._raw_bits;
 }
 template<size_t nbits, size_t es>
-inline bool operator!=(const posit<nbits, es>& lhs, const posit<nbits, es>& rhs) { return !operator==(lhs, rhs); }
+inline bool operator!=(const posit<nbits, es>& lhs, const posit<nbits, es>& rhs) {
+	return !operator==(lhs, rhs);
+}
 template<size_t nbits, size_t es>
 inline bool operator< (const posit<nbits, es>& lhs, const posit<nbits, es>& rhs) {
-	return lessThan(lhs._raw_bits, rhs._raw_bits); 
+	return lessThan(lhs._raw_bits, rhs._raw_bits);
 }
 template<size_t nbits, size_t es>
-inline bool operator> (const posit<nbits, es>& lhs, const posit<nbits, es>& rhs) { 
-	return operator< (rhs, lhs); 
+inline bool operator> (const posit<nbits, es>& lhs, const posit<nbits, es>& rhs) {
+	return operator< (rhs, lhs);
 }
 template<size_t nbits, size_t es>
-inline bool operator<=(const posit<nbits, es>& lhs, const posit<nbits, es>& rhs) { 
-	return operator< (lhs, rhs) || operator==(lhs, rhs); 
+inline bool operator<=(const posit<nbits, es>& lhs, const posit<nbits, es>& rhs) {
+	return operator< (lhs, rhs) || operator==(lhs, rhs);
 }
 template<size_t nbits, size_t es>
-inline bool operator>=(const posit<nbits, es>& lhs, const posit<nbits, es>& rhs) { 
-	return !operator< (lhs, rhs); 
+inline bool operator>=(const posit<nbits, es>& lhs, const posit<nbits, es>& rhs) {
+	return !operator< (lhs, rhs);
 }
 
-// POSIT BINARY ARITHMETIC OPERATORS
+// posit - posit binary arithmetic operators
+// BINARY ADDITION
 template<size_t nbits, size_t es>
 inline posit<nbits, es> operator+(const posit<nbits, es>& lhs, const posit<nbits, es>& rhs) {
 	posit<nbits, es> sum = lhs;
 	sum += rhs;
 	return sum;
 }
-
+// BINARY SUBTRACTION
 template<size_t nbits, size_t es>
 inline posit<nbits, es> operator-(const posit<nbits, es>& lhs, const posit<nbits, es>& rhs) {
 	posit<nbits, es> diff = lhs;
 	diff -= rhs;
 	return diff;
 }
-
+// BINARY MULTIPLICATION
 template<size_t nbits, size_t es>
 inline posit<nbits, es> operator*(const posit<nbits, es>& lhs, const posit<nbits, es>& rhs) {
 	posit<nbits, es> mul = lhs;
 	mul *= rhs;
 	return mul;
 }
-
+// BINARY DIVISION
 template<size_t nbits, size_t es>
 inline posit<nbits, es> operator/(const posit<nbits, es>& lhs, const posit<nbits, es>& rhs) {
 	posit<nbits, es> ratio = lhs;
 	ratio /= rhs;
 	return ratio;
 }
+
+#if POSIT_ENABLE_LITERALS
+
+// posit - literal int logic operators
+template<size_t nbits, size_t es>
+inline bool operator==(const posit<nbits, es>& lhs, int rhs) {
+	return lhs == posit<nbits, es>(rhs);
+}
+template<size_t nbits, size_t es>
+inline bool operator!=(const posit<nbits, es>& lhs, int rhs) {
+	return !operator==(lhs, posit<nbits, es>(rhs));
+}
+template<size_t nbits, size_t es>
+inline bool operator< (const posit<nbits, es>& lhs, int rhs) {
+	return lessThan(lhs._raw_bits, posit<nbits, es>(rhs)._raw_bits);
+}
+template<size_t nbits, size_t es>
+inline bool operator> (const posit<nbits, es>& lhs, int rhs) {
+	return operator< (posit<nbits, es>(rhs), lhs);
+}
+template<size_t nbits, size_t es>
+inline bool operator<=(const posit<nbits, es>& lhs, int rhs) {
+	return operator< (lhs, posit<nbits, es>(rhs)) || operator==(lhs, posit<nbits, es>(rhs));
+}
+template<size_t nbits, size_t es>
+inline bool operator>=(const posit<nbits, es>& lhs, int rhs) {
+	return !operator<(lhs, posit<nbits, es>(rhs));
+}
+
+// posit - literal double logic operators
+template<size_t nbits, size_t es>
+inline bool operator==(const posit<nbits, es>& lhs, double rhs) {
+	return lhs == posit<nbits, es>(rhs);
+}
+template<size_t nbits, size_t es>
+inline bool operator!=(const posit<nbits, es>& lhs, double rhs) {
+	return !operator==(lhs, posit<nbits, es>(rhs));
+}
+template<size_t nbits, size_t es>
+inline bool operator< (const posit<nbits, es>& lhs, double rhs) {
+	return lessThan(lhs._raw_bits, posit<nbits, es>(rhs)._raw_bits);
+}
+template<size_t nbits, size_t es>
+inline bool operator> (const posit<nbits, es>& lhs, double rhs) {
+	return operator< (posit<nbits, es>(rhs), lhs);
+}
+template<size_t nbits, size_t es>
+inline bool operator<=(const posit<nbits, es>& lhs, double rhs) {
+	return operator< (lhs, posit<nbits, es>(rhs)) || operator==(lhs, posit<nbits, es>(rhs));
+}
+template<size_t nbits, size_t es>
+inline bool operator>=(const posit<nbits, es>& lhs, double rhs) {
+	return !operator<(lhs, posit<nbits, es>(rhs));
+}
+
+// BINARY ADDITION
+template<size_t nbits, size_t es>
+inline posit<nbits, es> operator+(const posit<nbits, es>& lhs, double rhs) {
+	posit<nbits, es> sum = lhs;
+	sum += rhs;
+	return sum;
+}
+template<size_t nbits, size_t es>
+inline posit<nbits, es> operator+(double lhs, const posit<nbits, es>& rhs) {
+	posit<nbits, es> sum = lhs;
+	sum += rhs;
+	return sum;
+}
+
+// BINARY SUBTRACTION
+template<size_t nbits, size_t es>
+inline posit<nbits, es> operator-(double lhs, const posit<nbits, es>& rhs) {
+	posit<nbits, es> sum = lhs;
+	sum -= rhs;
+	return sum;
+}
+template<size_t nbits, size_t es>
+inline posit<nbits, es> operator-(const posit<nbits, es>& lhs, double rhs) {
+	posit<nbits, es> diff = lhs;
+	diff -= rhs;
+	return diff;
+}
+// BINARY MULTIPLICATION
+template<size_t nbits, size_t es>
+inline posit<nbits, es> operator*(double lhs, const posit<nbits, es>& rhs) {
+	posit<nbits, es> sum = lhs;
+	sum *= rhs;
+	return sum;
+}
+template<size_t nbits, size_t es>
+inline posit<nbits, es> operator*(const posit<nbits, es>& lhs, double rhs) {
+	posit<nbits, es> mul = lhs;
+	mul *= rhs;
+	return mul;
+}
+// BINARY DIVISION
+template<size_t nbits, size_t es>
+inline posit<nbits, es> operator/(double lhs, const posit<nbits, es>& rhs) {
+	posit<nbits, es> sum = lhs;
+	sum /= rhs;
+	return sum;
+}
+template<size_t nbits, size_t es>
+inline posit<nbits, es> operator/(const posit<nbits, es>& lhs, double rhs) {
+	posit<nbits, es> ratio = lhs;
+	ratio /= rhs;
+	return ratio;
+}
+
+#endif // POSIT_ENABLE_LITERALS
 
 /// Magnitude of a posit (equivalent to turning the sign bit off).
 template<size_t nbits, size_t es> 
@@ -1046,7 +1236,7 @@ posit<nbits, es> abs(const posit<nbits, es>& p) {
 }
 
 // QUIRE OPERATORS
-
+// Why are they defined here and not in quire.hpp? TODO
 
 template<size_t nbits, size_t es>
 value<nbits - es + 2> quire_add(const posit<nbits, es>& lhs, const posit<nbits, es>& rhs) {
