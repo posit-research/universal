@@ -4,13 +4,8 @@
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
-#include "stdafx.h"
-
-#include "../../bitset/bitset_helpers.hpp"
-#include "../../posit/exceptions.hpp"
-#include "../../posit/trace_constants.hpp"
-#include "../../posit/bit_functions.hpp"
-#include "../../posit/value.hpp"
+#include "common.hpp"
+#include <posit>
 
 using namespace std;
 using namespace sw::unum;
@@ -18,10 +13,10 @@ using namespace sw::unum;
 void TestConversionResult(bool bValid, string descriptor)
 {
 	if (!bValid) {
-		cout << descriptor << " conversions FAIL" << endl;
+		std::cout << descriptor << " conversions FAIL" << std::endl;
 	}
 	else {
-		cout << descriptor << " conversions PASS" << endl;
+		std::cout << descriptor << " conversions PASS" << std::endl;
 	}
 }
 
@@ -113,7 +108,7 @@ try {
 	f = -0.12499f; v = f; PrintValue(f, v);
 
 	cout << "Rounding" << endl;
-	std::bitset<8> fraction;
+	bitblock<8> fraction;
 	fraction = 0x55;
 	value<8> r8(false, 0, fraction, false, false);
 	cout << "Value is " << r8 << " components are " << components(r8) << endl;

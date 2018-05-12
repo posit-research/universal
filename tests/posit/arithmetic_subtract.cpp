@@ -1,30 +1,26 @@
 // arithmetic_subtract.cpp: functional tests for subtraction
 //
-// Copyright (C) 2017 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
-#include "stdafx.h"
+#include "common.hpp"
 
 // when you define POSIT_VERBOSE_OUTPUT executing an SUB the code will print intermediate results
 //#define POSIT_VERBOSE_OUTPUT
 #define POSIT_TRACE_SUB
 
 // minimum set of include files to reflect source code dependencies
-#include "../../bitset/bitset_helpers.hpp"
 #include "../../posit/posit.hpp"
 #include "../../posit/posit_manipulators.hpp"
 #include "../tests/test_helpers.hpp"
 #include "../tests/posit_test_helpers.hpp"
-
-using namespace std;
-using namespace sw::unum;
 
 // generate specific test case that you can trace with the trace conditions in posit.h
 // for most bugs they are traceable with _trace_conversion and _trace_sub
 template<size_t nbits, size_t es, typename Ty>
 void GenerateTestCase(Ty a, Ty b) {
 	Ty ref;
-	posit<nbits, es> pa, pb, pref, pdif;
+	sw::unum::posit<nbits, es> pa, pb, pref, pdif;
 	pa = a;
 	pb = b;
 	ref = a - b;
@@ -40,10 +36,11 @@ void GenerateTestCase(Ty a, Ty b) {
 #define MANUAL_TESTING 0
 #define STRESS_TESTING 0
 
-#include "../bitset_test_helpers.hpp"
-
 int main(int argc, char** argv)
 try {
+	using namespace std;
+	using namespace sw::unum;
+
 	bool bReportIndividualTestCases = false;
 	int nrOfFailedTestCases = 0;
 
@@ -79,7 +76,10 @@ try {
 
 #else
 
+	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<2, 0>(tag, bReportIndividualTestCases), "posit<2,0>", "subtraction");
+
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<3, 0>(tag, bReportIndividualTestCases), "posit<3,0>", "subtraction");
+	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<3, 1>(tag, bReportIndividualTestCases), "posit<3,1>", "subtraction");
 
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<4, 0>(tag, bReportIndividualTestCases), "posit<4,0>", "subtraction");
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<4, 1>(tag, bReportIndividualTestCases), "posit<4,1>", "subtraction");
@@ -131,10 +131,10 @@ try {
 	return (nrOfFailedTestCases > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 catch (char const* msg) {
-	cerr << msg << endl;
+	std::cerr << msg << std::endl;
 	return EXIT_FAILURE;
 }
 catch (...) {
-	cerr << "Caught unknown exception" << endl;
+	std::cerr << "Caught unknown exception" << std::endl;
 	return EXIT_FAILURE;
 }

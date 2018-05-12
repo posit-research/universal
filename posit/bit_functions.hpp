@@ -100,96 +100,14 @@ namespace sw {
 			static_assert(std::numeric_limits<long double>::digits <= 64, "This function only works when long double significant is <= 64 bit.");
 			if (sizeof(long double) == 8) { // it is just a double
 				_sign = fp < 0.0 ? true : false;
-				_fr = frexpl(fp, &_exponent);
+				_fr = frexp(double(fp), &_exponent);
 				_fraction = uint64_t(0x000FFFFFFFFFFFFFull) & reinterpret_cast<uint64_t&>(_fr);
 			}
 			else if (sizeof(long double) == 16 && std::numeric_limits<long double>::digits <= 64) {
 				_sign = fp < 0.0 ? true : false;
 				_fr = frexpl(fp, &_exponent);
-				_fraction = uint64_t(0xFFFFFFFFFFFFFFFFull) & reinterpret_cast<uint64_t&>(_fr);
+				_fraction = uint64_t(0x7FFFFFFFFFFFFFFFull) & reinterpret_cast<uint64_t&>(_fr); // 80bit extended format only has 63bits of fraction
 			}
-		}
-
-		// integral type to bitset transformations
-
-		// we are using a full nbits sized bitset even though nbits-3 is the maximum fraction
-		// a posit would contain. However, we need an extra bit after the cut-off to make the
-		// round up/down decision. The <nbits-something> size created a lot of sw complexity
-		// that isn't worth the trouble, so we are simplifying and simply manage a full nbits
-		// of fraction bits.
-
-		template<size_t nbits>
-		std::bitset<nbits> extract_23b_fraction(uint32_t _23b_fraction_without_hidden_bit) {
-			std::bitset<nbits> _fraction;
-			uint32_t mask = uint32_t(0x00400000ul);
-			unsigned int ub = (nbits < 23 ? nbits : 23);
-			for (unsigned int i = 0; i < ub; i++) {
-				_fraction[nbits - 1 - i] = _23b_fraction_without_hidden_bit & mask;
-				mask >>= 1;
-			}
-			return _fraction;
-		}
-
-		template<size_t nbits>
-		std::bitset<nbits> extract_52b_fraction(uint64_t _52b_fraction_without_hidden_bit) {
-			std::bitset<nbits> _fraction;
-			uint64_t mask = uint64_t(0x0008000000000000ull);
-			unsigned int ub = (nbits < 52 ? nbits : 52);
-			for (unsigned int i = 0; i < ub; i++) {
-				_fraction[nbits - 1 - i] = _52b_fraction_without_hidden_bit & mask;
-				mask >>= 1;
-			}
-			return _fraction;
-		}
-
-		template<size_t nbits>
-		std::bitset<nbits> extract_64b_fraction(uint64_t _64b_fraction_without_hidden_bit) {
-			std::bitset<nbits> _fraction;
-			uint64_t mask = uint64_t(0x8000000000000000ull);
-			unsigned int ub = (nbits < 64 ? nbits : 64);
-			for (unsigned int i = 0; i < ub; i++) {
-				_fraction[nbits - 1 - i] = _64b_fraction_without_hidden_bit & mask;
-				mask >>= 1;
-			}
-			return _fraction;
-		}
-
-		// 128 bit unsigned int mapped to two uint64_t elements
-		typedef struct __uint128 {
-			uint64_t lower;
-			uint64_t upper;
-		} uint128;
-
-		// take in a long double mapped to two uint64_t elements
-		template<size_t nbits>
-		std::bitset<nbits> extract_long_double_fraction(uint128* _112b_fraction_without_hidden_bit) {
-			std::bitset<nbits> _fraction;
-			int msb = nbits - 1;
-			uint64_t mask = uint64_t(0x0000800000000000ull);
-			unsigned int ub = (nbits < 48 ? nbits : 48); // 48 bits in the upper half
-			for (unsigned int i = 0; i < ub; i++) {
-				_fraction[msb--] = _112b_fraction_without_hidden_bit->upper & mask;
-				mask >>= 1;
-			}
-			mask = uint64_t(0x8000000000000000ull);
-			ub = (nbits < 112-48 ? nbits : 112-48); // max 64 bits in the lower half
-			for (unsigned int i = 0; i < ub; i++) {
-				_fraction[msb--] = _112b_fraction_without_hidden_bit->lower & mask;
-				mask >>= 1;
-			}
-			return _fraction;
-		}
-
-		template<size_t nbits>
-		std::bitset<nbits> copy_integer_fraction(unsigned long long _fraction_without_hidden_bit) {
-			std::bitset<nbits> _fraction;
-			uint64_t mask = uint64_t(0x8000000000000000ull);
-			unsigned int ub = (nbits < 64 ? nbits : 64);
-			for (unsigned int i = 0; i < ub; i++) {
-				_fraction[nbits - 1 - i] = _fraction_without_hidden_bit & mask;
-				mask >>= 1;
-			}
-			return _fraction;
 		}
 
 		// representation helpers

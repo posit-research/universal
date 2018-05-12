@@ -8,6 +8,10 @@
 #define _USE_MATH_DEFINES
 #include "stdafx.h"
 
+// when you define POSIT_VERBOSE_OUTPUT executing an ADD the code will print intermediate results
+//#define POSIT_VERBOSE_OUTPUT
+#define POSIT_TRACE_CONVERSION
+
 #include <posit>
 
 using namespace std;
@@ -130,7 +134,7 @@ namespace sw {
 				}
 			}
 
-			std::bitset<posit<nbits,es>::fbits> f = p.get_fraction().get();
+			bitblock<posit<nbits,es>::fbits> f = p.get_fraction().get();
 			int fractionBits = (int)p.get_fraction().nrBits();
 			int nrOfFractionBitsProcessed = 0;
 			for (int i = int(p.fbits) - 1; i >= 0; --i) {
@@ -150,6 +154,32 @@ namespace sw {
 int main(int argc, char** argv)
 try {
 	bool bSuccess = true;
+
+	{
+		double d = (double)0.79432823472428150206586100479;
+		posit<32, 2> E_pos(d);
+		cout << setprecision(30) << fixed << d << setprecision(6) << endl;
+		cout << pretty_print(E_pos) << endl;
+
+		long double ld = (long double)0.79432823472428150206586100479;
+		E_pos = ld;
+		cout << setprecision(30) << fixed << ld << setprecision(6) << endl;
+		cout << pretty_print(E_pos) << endl;
+
+
+		int _exp;
+		union {
+		    long double fr;
+		    unsigned char bytes[16];
+		} u;
+		u.fr = frexpl(ld, &_exp);
+		cout << "bytes of fraction: " << hex;
+		for (int i = 15; i >= 0; i--) {
+			cout << setw(2) << unsigned(u.bytes[i]) << " ";
+		}
+		cout << dec << endl;
+	}
+	return 0;
 
 	{
 		constexpr size_t nbits = 8;

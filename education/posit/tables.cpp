@@ -1,17 +1,12 @@
 // tables.cpp: create detailed component tables that spell out all the components that make up a posit
 //
-// Copyright (C) 2017 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
-#include "stdafx.h"
-#include <sstream>
+#include "common.hpp"
+#include <posit>
 
-#include "../../posit/posit.hpp"
-#include "../../posit/posit_manipulators.hpp"
-
-using namespace std;
-using namespace sw::unum;
 
 /*
   Posit values are a combination of 
@@ -27,16 +22,17 @@ using namespace sw::unum;
 
 int main(int argc, char** argv)
 try {
+	using namespace std;
+	using namespace sw::unum;
+
 	int nrOfFailedTestCases = 0;
 
 	cout << "Generate posit configurations" << endl;
 
-	posit<6, 2> p;
-	p.set_raw_bits(0x25);
-	exponent<6, 2> exponent = p.get_exponent();
-	cout << p << " " << components_to_string(p) << " " << exponent << endl;
+	GeneratePositTable<2, 0>(cout);
 
 	GeneratePositTable<3, 0>(cout);
+	GeneratePositTable<3, 1>(cout);
 
 	GeneratePositTable<4, 0>(cout);		
 	GeneratePositTable<4, 1>(cout);
@@ -63,13 +59,13 @@ try {
 	GeneratePositTable<8, 4>(cout);
 	GeneratePositTable<8, 5>(cout);
 
-	return (nrOfFailedTestCases > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
+	return EXIT_SUCCESS;
 }
 catch (char const* msg) {
-	cerr << msg << endl;
+	std::cerr << msg << std::endl;
 	return EXIT_FAILURE;
 }
 catch (...) {
-	cerr << "Caught unknown exception" << endl;
+	std::cerr << "Caught unknown exception" << std::endl;
 	return EXIT_FAILURE;
 }

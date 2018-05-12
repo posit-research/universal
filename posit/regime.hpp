@@ -44,7 +44,7 @@ public:
 		double scale;
 		int e2 = (1 << es) * _k;
 		if (e2 < -63 || e2 > 63) {
-			scale = pow(2.0, e2);
+			scale = std::pow(2.0, e2);  // TODO: needs a native posit implementation
 		}
 		else {
 			if (e2 >= 0) {
@@ -59,10 +59,10 @@ public:
 	bool isZero() const {
 		return _Bits.none();
 	}
-	std::bitset<nbits - 1> get() const {
+	bitblock<nbits - 1> get() const {
 		return _Bits;
 	}
-	void set(const std::bitset<nbits - 1>& raw, size_t nrOfRegimeBits) {
+	void set(const bitblock<nbits - 1>& raw, size_t nrOfRegimeBits) {
 		_Bits = raw;
 		_RegimeBits = nrOfRegimeBits;
 	}
@@ -134,7 +134,7 @@ public:
 		return carry;
 	}
 private:
-	std::bitset<nbits - 1>	_Bits;
+	bitblock<nbits - 1>  	_Bits;
 	signed char				_k;
 	unsigned char			_run;
 	size_t					_RegimeBits;

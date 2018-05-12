@@ -1,31 +1,27 @@
 // arithmetic_divide.cpp: functional tests for division
 //
-// Copyright (C) 2017 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
-#include "stdafx.h"
+#include "common.hpp"
 
 // when you define POSIT_VERBOSE_OUTPUT executing an DIV the code will print intermediate results
 //#define POSIT_VERBOSE_OUTPUT
 #define POSIT_TRACE_DIV
 
 // minimum set of include files to reflect source code dependencies
-#include "../../bitset/bitset_helpers.hpp"
 #include "../../posit/posit.hpp"
 #include "../../posit/posit_manipulators.hpp"
 #include "../tests/test_helpers.hpp"
 #include "../tests/posit_test_helpers.hpp"
-
-using namespace std;
-using namespace sw::unum;
 
 // generate specific test case that you can trace with the trace conditions in posit.h
 // for most bugs they are traceable with _trace_conversion and _trace_add
 template<size_t nbits, size_t es, typename Ty>
 void GenerateTestCase(Ty a, Ty b) {
 	Ty ref;
-	posit<nbits, es> pa, pb, pref, pdiv;
+	sw::unum::posit<nbits, es> pa, pb, pref, pdiv;
 	pa = a;
 	pb = b;
 	ref = a / b;
@@ -42,15 +38,15 @@ template<size_t nbits, size_t es>
 void GenerateWorstCaseDivision() {
 	std::stringstream posit_descriptor;
 	posit_descriptor << "posit<" << nbits << ", " << es << ">";
-	posit<nbits, es> p_plus_eps(1), p_minus_eps(1), p_result;
+	sw::unum::posit<nbits, es> p_plus_eps(1), p_minus_eps(1), p_result;
 	p_plus_eps++;
 	p_minus_eps--;
 	p_result = p_plus_eps / p_minus_eps;
 	if (es < 2) {
-		std::cout << posit_descriptor.str() << " minpos = " << std::fixed << std::setprecision(nbits) << minpos_value<nbits, es>() << std::dec << ::endl;
+		std::cout << posit_descriptor.str() << " minpos = " << std::fixed << std::setprecision(nbits) << sw::unum::minpos_value<nbits, es>() << std::dec << std::endl;
 	}
 	else {
-		std::cout << posit_descriptor.str() << " minpos = " << setprecision(nbits) << minpos_value<nbits, es>() << std::endl;
+		std::cout << posit_descriptor.str() << " minpos = " << std::setprecision(nbits) << sw::unum::minpos_value<nbits, es>() << std::endl;
 
 	}
 	std::cout << p_plus_eps.get() << " / " << p_minus_eps.get() << " = " << p_result.get() << std::endl;
@@ -125,11 +121,46 @@ void EnumerateToughDivisions() {
 	GenerateWorstCaseDivision<60, 3>();
 }
 
+/*
+As we discussed, I think the following cases are tricky for the divide function. I discovered them when trying to approximate x/y with x times (1/y). All are in the <16,1> environment, so you should be able to test them easily.
+
+Let
+
+A = posit represented by integer 20479 (value is 8191/4096 = 1.999755859375)
+B = posit represented by integer 2 (value is 1/67108864 = 0.00000001490116119384765625)
+C = posit represented by integer 16383 (value is 8191/8192 = 0.9998779296875)
+D = posit represented by integer 16385 (value is 4097/4096 = 1.000244140625)
+
+Then the divide routine should return the following:
+
+B / A = posit represented by integer 2 (that is, the division leaves B unchanged)
+A / B = posit represented by integer 32766 (value is 67108864)
+C / D = posit represented by integer 16381 (value is 0.996337890625)
+D / C = posit represented by integer 16386 (value is 1.00048828125)
+
+Notice that multiplying the B/A and A/B results gives 1 exactly, but multiplying the C/D and D/C results gives 1.000121891498565673828125.
+*/
+void ToughDivisions2() {
+	sw::unum::posit<16, 1> a, b, c, d;
+	a.set_raw_bits(20479);
+	b.set_raw_bits(2);
+	c.set_raw_bits(16383);
+	d.set_raw_bits(16385);
+
+	GenerateTestCase<16, 1>(b, a);
+	GenerateTestCase<16, 1>(a, b);
+	GenerateTestCase<16, 1>(c, d);
+	GenerateTestCase<16, 1>(d, c);
+}
+
 #define MANUAL_TESTING 0
 #define STRESS_TESTING 0
 
 int main(int argc, char** argv)
 try {
+	using namespace std;
+	using namespace sw::unum;
+
 	bool bReportIndividualTestCases = false;
 	int nrOfFailedTestCases = 0;
 
@@ -139,6 +170,11 @@ try {
 
 #if MANUAL_TESTING
 	// generate individual testcases to hand trace/debug
+
+	ToughDivisions2();
+
+	return 0;
+
 	const size_t nbits = 16;
 	const size_t es = 1;
 	double a, b;
@@ -151,17 +187,24 @@ try {
 	GenerateTestCase<40, 1, double>(a, b);
 	GenerateTestCase<48, 1, double>(a, b);
 
+
+
 	// Generate the worst fraction pressure for different posit configurations
 	EnumerateToughDivisions();
 
-	nrOfFailedTestCases += ReportTestResult(ValidateDivision<3, 0>("Manual Testing", true), "posit<3,0>", "division");
+	nrOfFailedTestCases += ReportTestResult(ValidateDivision<2, 0>("Manual Testing", true), "posit<2,0>", "division");
+	nrOfFailedTestCases += ReportTestResult(ValidateDivision<3, 0>("Manual Testing", true), "posit<3,0>", "division");	
+	nrOfFailedTestCases += ReportTestResult(ValidateDivision<3, 1>("Manual Testing", true), "posit<3,1>", "division");
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<4, 0>("Manual Testing", true), "posit<4,0>", "division");
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<5, 0>("Manual Testing", true), "posit<5,0>", "division");
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<8, 0>("Manual Testing", true), "posit<8,0>", "division");
 
 #else
 
+	nrOfFailedTestCases += ReportTestResult(ValidateDivision<2, 0>(tag, bReportIndividualTestCases), "posit<2,0>", "division");
+
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<3, 0>(tag, bReportIndividualTestCases), "posit<3,0>", "division");
+	nrOfFailedTestCases += ReportTestResult(ValidateDivision<3, 1>(tag, bReportIndividualTestCases), "posit<3,1>", "division");
 
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<4, 0>(tag, bReportIndividualTestCases), "posit<4,0>", "division");
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<4, 1>(tag, bReportIndividualTestCases), "posit<4,1>", "division");
@@ -213,11 +256,11 @@ try {
 	return (nrOfFailedTestCases > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 catch (char const* msg) {
-	cerr << msg << endl;
+	std::cerr << msg << std::endl;
 	return EXIT_FAILURE;
 }
 catch (...) {
-	cerr << "Caught unknown exception" << endl;
+	std::cerr << "Caught unknown exception" << std::endl;
 	return EXIT_FAILURE;
 }
 
