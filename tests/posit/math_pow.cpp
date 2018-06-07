@@ -13,9 +13,9 @@
 // minimum set of include files to reflect source code dependencies
 #include "../../posit/posit.hpp"
 #include "../../posit/posit_manipulators.hpp"
-#include "../../math/pow.hpp"
+#include "../../posit/math_pow.hpp"
 #include "../tests/test_helpers.hpp"
-#include "../tests/posit_test_helpers.hpp"
+#include "../tests/posit_math_helpers.hpp"
 
 // generate specific test case that you can trace with the trace conditions in posit.h
 // for most bugs they are traceable with _trace_conversion and _trace_add
@@ -53,8 +53,6 @@ try {
 	// generate individual testcases to hand trace/debug
 	GenerateTestCase<16, 1, float>(4.0f, 2.0f);
 
-	return 0;
-
 #if GENERATE_POW_TABLES
 	GeneratePowTable<3, 0>();
 	GeneratePowTable<4, 0>();
@@ -84,7 +82,11 @@ try {
 	nrOfFailedTestCases += ReportTestResult(ValidatePowerFunction<5, 1>("Manual Testing", true), "posit<5,1>", "pow");
 	nrOfFailedTestCases += ReportTestResult(ValidatePowerFunction<5, 2>("Manual Testing", true), "posit<5,2>", "pow");
 
-	//nrOfFailedTestCases += ReportTestResult(ValidatePowMethod<8, 4>("Manual Testing", true), "posit<8,4>", "pow");
+	nrOfFailedTestCases += ReportTestResult(ValidatePowerFunction<8, 0>("Manual Testing", true), "posit<8,0>", "pow");	
+	nrOfFailedTestCases += ReportTestResult(ValidatePowerFunction<8, 1>("Manual Testing", true), "posit<8,1>", "pow");
+	nrOfFailedTestCases += ReportTestResult(ValidatePowerFunction<8, 4>("Manual Testing", true), "posit<8,4>", "pow");
+
+	//nrOfFailedTestCases += ReportTestResult(ValidatePowerFunction<16, 1>("Manual Testing", true), "posit<16,1>", "pow");
 
 #else
 

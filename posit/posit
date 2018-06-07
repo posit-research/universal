@@ -1,4 +1,3 @@
-#pragma once
 // posit standard header
 //
 // Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
@@ -15,7 +14,18 @@
 #include "quire.hpp"
 
 // math functions
-#include "../math/sqrt.hpp"
-
+#include "math_truncate.hpp"
+#include "math_complex.hpp"
+#include "math_sqrt.hpp"
+#include "math_pow.hpp"
+#include "math_logarithm.hpp"
+#include "math_exponents.hpp"
+#include "math_trigonometric.hpp"
+#include "math_hyperbolic.hpp"
+#include "math_error_gamma.hpp"
+#include "math_minmax.hpp"
+#include "math_hypot.hpp"
+#include "math_frac.hpp"
+#include "math_next.hpp"
 
 #endif

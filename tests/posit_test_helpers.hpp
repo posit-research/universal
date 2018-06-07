@@ -125,43 +125,13 @@ namespace sw {
 			std::cerr << test_case << " actual " << actual << " required " << golden_value << std::endl;
 		}
 
-		template<size_t nbits, size_t es>
-		void ReportTwoInputFunctionError(std::string test_case, std::string op, const posit<nbits, es>& a, const posit<nbits, es>& b, const posit<nbits, es>& pref, const posit<nbits, es>& presult) {
-			std::cerr << test_case << " " << op << "("
-				<< std::setprecision(20) 
-				<< std::setw(FLOAT_TABLE_WIDTH) << a
-				<< ","
-				<< std::setw(FLOAT_TABLE_WIDTH) << b << ")"
-				<< " != "
-				<< std::setw(FLOAT_TABLE_WIDTH) << pref << " instead it yielded "
-				<< std::setw(FLOAT_TABLE_WIDTH) << presult
-				<< " " << pref.get() << " vs " << presult.get()
-				<< std::setprecision(5)
-				<< std::endl;
-		}
-
-		template<size_t nbits, size_t es>
-		void ReportTwoInputFunctionSuccess(std::string test_case, std::string op, const posit<nbits, es>& a, const posit<nbits, es>& b, const posit<nbits, es>& pref, const posit<nbits, es>& presult) {
-			std::cerr << test_case << " " << op << "("
-				<< std::setprecision(20)
-				<< std::setw(FLOAT_TABLE_WIDTH) << a
-				<< ","
-				<< std::setw(FLOAT_TABLE_WIDTH) << b << ")"
-				<< " == "
-				<< std::setw(FLOAT_TABLE_WIDTH) << pref << " ==  "
-				<< std::setw(FLOAT_TABLE_WIDTH) << presult
-				<< " " << pref.get() << " vs " << presult.get()
-				<< std::setprecision(5)
-				<< std::endl;
-		}
-
 		/////////////////////////////// VALIDATION TEST SUITES ////////////////////////////////
 
 		template<size_t nbits, size_t es>
 		int Compare(double input, const posit<nbits, es>& presult, double reference, bool bReportIndividualTestCases) {
 			int fail = 0;
 			double result = double(presult);
-			if (fabs(result - reference) > 0.000000001) {
+			if (std::fabs(result - reference) > 0.000000001) {
 				fail++;
 				if (bReportIndividualTestCases)	ReportConversionError("FAIL", "=", input, reference, presult);
 			}
@@ -344,7 +314,6 @@ namespace sw {
 			return nrOfFailedTestCases;
 		}
 
-
 		// validate the postfix operator++
 		template<size_t nbits, size_t es>
 		int ValidatePostfix(std::string tag, bool bReportIndividualTestCases)
@@ -370,7 +339,6 @@ namespace sw {
 			return nrOfFailedTestCases;
 		}
 
-
 		// validate the prefix operator++
 		template<size_t nbits, size_t es>
 		int ValidatePrefix(std::string tag, bool bReportIndividualTestCases)
@@ -395,7 +363,6 @@ namespace sw {
 
 			return nrOfFailedTestCases;
 		}
-
 
 		// enumerate all negation cases for a posit configuration: executes within 10 sec till about nbits = 14
 		template<size_t nbits, size_t es>
@@ -598,36 +565,6 @@ namespace sw {
 			return nrOfFailedTests;
 		}
 
-		////////////////////////////////////  MATHEMATICAL FUNCTIONS  //////////////////////////////////////////
-
-		// enumerate all power method cases for a posit configuration
-		template<size_t nbits, size_t es>
-		int ValidatePowerFunction(std::string tag, bool bReportIndividualTestCases) {
-			const int NR_POSITS = (unsigned(1) << nbits);
-			int nrOfFailedTests = 0;
-			posit<nbits, es> pa, pb, ppow, pref;
-
-			double da, db;
-			for (int i = 0; i < NR_POSITS; i++) {
-				pa.set_raw_bits(i);
-				da = double(pa);
-				for (int j = 0; j < NR_POSITS; j++) {
-					pb.set_raw_bits(j);
-					db = double(pb);
-					ppow = pow(pa, pb);
-					pref = std::pow(da, db);
-					if (ppow != pref) {
-						nrOfFailedTests++;
-						if (bReportIndividualTestCases)	ReportTwoInputFunctionError("FAIL", "pow", pa, pb, pref, ppow);
-					}
-					else {
-						//if (bReportIndividualTestCases) ReportTwoInputFunctionSuccess("PASS", "pow", pa, pb, pref, ppow);
-					}
-				}
-			}
-
-			return nrOfFailedTests;
-		}
 		//////////////////////////////////// RANDOMIZED TEST SUITE FOR BINARY OPERATORS ////////////////////////
 
 		// for testing posit configs that are > 14-15, we need a more efficient approach.
@@ -745,7 +682,7 @@ namespace sw {
 		}
 
 
-	}; // namespace unum
+	} // namespace unum
 
-}; // namespace sw
+} // namespace sw
 
