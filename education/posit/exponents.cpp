@@ -1,4 +1,4 @@
-﻿//  exponents.cpp : examples of working with posit exponents
+//  exponents.cpp : examples of working with posit exponents
 //
 // Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
 //
@@ -24,6 +24,7 @@ try {
 		int k = calculate_k<nbits, es>(scale);
 		size_t regime_size = r.assign_regime_pattern(scale >> es);
 		size_t exp_size = e.assign_exponent_bits(scale, k, regime_size);
+		cout << "exponent bits: " << exp_size << '\n';
 		if (scale < 0) {
 			cout << "in value = " << setw(12) << 1.0/(unsigned(1) << -scale) << " scale = " << setw(3) << scale << " r(" << r << ")  e(" << e << ")     projected value " << r.value() * e.value() << endl;
 		}

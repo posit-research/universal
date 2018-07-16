@@ -70,7 +70,7 @@ namespace sw {
 			static constexpr size_t fbits = nbits - 3 - es;  // TODO: is there a better solution to gain access to the posit's fbits value?
 			std::stringstream ss;
 			ss << ( p.get_sign() ? "s1 r" : "s0 r" );
-			std::bitset<nbits-1> r = p.get_regime().get();
+			bitblock<nbits-1> r = p.get_regime().get();
 			int regimeBits = (int)p.get_regime().nrBits();
 			int nrOfRegimeBitsProcessed = 0;
 			for (int i = nbits - 2; i >= 0; --i) {
@@ -79,7 +79,7 @@ namespace sw {
 				}
 			}
 			ss << " e";
-			std::bitset<es> e = p.get_exponent().get();
+			bitblock<es> e = p.get_exponent().get();
 			int exponentBits = (int)p.get_exponent().nrBits();
 			int nrOfExponentBitsProcessed = 0;
 			for (int i = int(es) - 1; i >= 0; --i) {
@@ -88,7 +88,7 @@ namespace sw {
 				}
 			}
 			ss << " f";
-			std::bitset<fbits> f = p.get_fraction().get();
+			bitblock<fbits> f = p.get_fraction().get();
 			int fractionBits = (int)p.get_fraction().nrBits();
 			int nrOfFractionBitsProcessed = 0;
 			for (int i = int(p.fbits) - 1; i >= 0; --i) {
@@ -177,7 +177,7 @@ namespace sw {
 			Color def(ColorCode::FG_DEFAULT);
 			ss << red << (p.isNegative() ? "1" : "0");
 
-			std::bitset<nbits - 1> r = p.get_regime().get();
+			bitblock<nbits - 1> r = p.get_regime().get();
 			int regimeBits = (int)p.get_regime().nrBits();
 			int nrOfRegimeBitsProcessed = 0;
 			for (int i = nbits - 2; i >= 0; --i) {
@@ -186,7 +186,7 @@ namespace sw {
 				}
 			}
 
-			std::bitset<es> e = p.get_exponent().get();
+			bitblock<es> e = p.get_exponent().get();
 			int exponentBits = (int)p.get_exponent().nrBits();
 			int nrOfExponentBitsProcessed = 0;
 			for (int i = int(es) - 1; i >= 0; --i) {
@@ -222,7 +222,7 @@ namespace sw {
 			const size_t k_column = 8;
 			const size_t sign_column = 8;
 			const size_t scale_column = 8;
-			const size_t regime_value_column = 30;
+		//	const size_t regime_value_column = 30;
 			const size_t regime_column = 16;
 			const size_t exponent_column = 16;
 			const size_t fraction_column = 16;
@@ -239,7 +239,7 @@ namespace sw {
 				<< std::setw(exponent_column) << " exponent"
 				<< std::setw(fraction_column) << " fraction"
 				<< std::setw(value_column) << " value" << std::endl;
-			for (int i = 0; i < size; i++) {
+			for (size_t i = 0; i < size; i++) {
 				myPosit.set_raw_bits(i);
 				regime<nbits,es>   r = myPosit.get_regime();
 				exponent<nbits,es> e = myPosit.get_exponent();
@@ -262,3 +262,4 @@ namespace sw {
 	}  // namespace unum
 
 }  // namespace sw
+

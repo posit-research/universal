@@ -1,7 +1,7 @@
 #
 # multi-stage build
 # docker build --target builder -t stillwater/universal:builder will just build a builder container
-# docker build --target release -t stillwater/universal:release will just build a builder container
+# docker build --target release -t stillwater/universal:release will just build a release container
 
 # BUILDER stage
 FROM gcc:7 as builder
@@ -19,19 +19,21 @@ RUN ls -la /usr/src/universal && cmake -version
 # set up the cmake/make environment to issue the build commands
 RUN mkdir build 
 WORKDIR /usr/src/universal/build
-RUN cmake .. && make
+RUN cmake -DBUILD_CI_CHECK=ON .. && make
 
 # actual command 'make test' is run as part of the test pipeline
 
-# add a command that when you run the container without a command that it produces something meaningful
+# add a command that when you run the container without a command, it produces something meaningful
 CMD ["echo", "Universal Numbers Library Version 1.0.0"]
 
 
 # RELEASE stage
-FROM alpine:latest as release
+#FROM alpine:latest as release    # hitting a segfault during startup of some playground programs
+FROM debian:latest as release
 MAINTAINER Theodore Omtzigt
 
-RUN apk add --no-cache libc6-compat libstdc++ make cmake bash gawk sed grep bc coreutils
+#RUN apk add --no-cache libc6-compat libstdc++ make cmake bash gawk sed grep bc coreutils
+RUN apt-get update && apt-get install -y make cmake
 
 # after building, the test executables are organized in the build directory under root
 # ctest gets its configuration for CTestTestfile.cmake files. There is one at the root of the build tree

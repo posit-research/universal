@@ -22,7 +22,7 @@ namespace sw {
 		class value {
 		public:
 			static constexpr size_t fhbits = fbits + 1;    // number of fraction bits including the hidden bit
-			value() : _sign(false), _scale(0), _nrOfBits(fbits), _zero(true), _inf(false), _nan(false) {}
+			value() : _sign(false), _scale(0), _nrOfBits(fbits), _fraction(), _inf(false), _zero(true), _nan(false) {}
 			value(bool sign, int scale, const bitblock<fbits>& fraction_without_hidden_bit, bool zero = true, bool inf = false) : _sign(sign), _scale(scale), _nrOfBits(fbits), _fraction(fraction_without_hidden_bit), _inf(inf), _zero(zero), _nan(false) {}
 
 			value(const signed char initial_value)        { *this = initial_value; }
@@ -33,6 +33,7 @@ namespace sw {
 			value(const char initial_value)               { *this = initial_value; }
 			value(const unsigned short initial_value)     { *this = initial_value; }
 			value(const unsigned int initial_value)       { *this = initial_value; }
+			value(const unsigned long initial_value)      { *this = initial_value; }
 			value(const unsigned long long initial_value) { *this = initial_value; }
 			value(const float initial_value)              { *this = initial_value; }
 			value(const double initial_value)             { *this = initial_value; }
@@ -103,6 +104,10 @@ namespace sw {
 				return *this;
 			}
 			value<fbits>& operator=(const unsigned int rhs) {
+				*this = (long long)(rhs);
+				return *this;
+			}
+			value<fbits>& operator=(const unsigned long rhs) {
 				*this = (long long)(rhs);
 				return *this;
 			}
@@ -231,49 +236,6 @@ namespace sw {
 				}
 				return *this;
 			}
-
-        // compiler environment idiosynchracies regarding type aliasing
-#if defined(__clang__)
-        /* Clang/LLVM. ---------------------------------------------- */
-	value(const size_t initial_value)                { *this = initial_value; }
-	value<fbits>& operator=(const size_t rhs) {
-		*this = (unsigned long long)(rhs);
-		return *this;
-	}
-
-#elif defined(__ICC) || defined(__INTEL_COMPILER)
-        /* Intel ICC/ICPC. ------------------------------------------ */
-
-#elif defined(__GNUC__) || defined(__GNUG__)
-        /* GNU GCC/G++. --------------------------------------------- */
-	value(const size_t initial_value)                { *this = initial_value; }
-	value<fbits>& operator=(const size_t rhs) {
-		*this = (unsigned long long)(rhs);
-		return *this;
-	}
-
-#elif defined(__HP_cc) || defined(__HP_aCC)
-        /* Hewlett-Packard C/aC++. ---------------------------------- */
-
-#elif defined(__IBMC__) || defined(__IBMCPP__)
-        /* IBM XL C/C++. -------------------------------------------- */
-
-#elif defined(_MSC_VER)
-        /* Microsoft Visual Studio. --------------------------------- */
-
-#elif defined(__PGI)
-        /* Portland Group PGCC/PGCPP. ------------------------------- */
-
-#elif defined(__SUNPRO_C) || defined(__SUNPRO_CC)
-        /* Oracle Solaris Studio. ----------------------------------- */
-	value(const size_t initial_value)                { *this = initial_value; }
-	value<fbits>& operator=(const size_t rhs) {
-		*this = (unsigned long long)(rhs);
-		return *this;
-	}
-#endif
-
-
 
 			// operators
 			value<fbits> operator-() const {				
@@ -414,6 +376,7 @@ namespace sw {
 			explicit operator double() const { return to_double(); }
 			explicit operator float() const { return to_float(); }
 
+			// TODO: this does not implement a 'real' right extend. tgtbits need to be shorter than fbits
 			template<size_t srcbits, size_t tgtbits>
 			void right_extend(const value<srcbits>& src) {
 				_sign = src.sign();
@@ -467,10 +430,10 @@ namespace sw {
 				return value<tgt_size>(_sign, _scale, rounded_fraction, _zero, _inf);
 			}
 		private:
-			bool				_sign;
-			int					_scale;
+			bool                _sign;
+			int                 _scale;
+			int                 _nrOfBits;  // in case the fraction is smaller than the full fbits
 			bitblock<fbits>	    _fraction;
-			int					_nrOfBits;  // in case the fraction is smaller than the full fbits
 			bool                _inf;
 			bool                _zero;
 			bool                _nan;
