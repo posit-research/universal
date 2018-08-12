@@ -5,11 +5,9 @@
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
 #include "common.hpp"
-
-#define POSIT_TRACE_DEBUG
-#define POSIT_TRACE_MUL
+// enable/disable posit arithmetic exceptions
+#define POSIT_THROW_ARITHMETIC_EXCEPTION 0
 #include <posit>
-
 #include "posit_performance.hpp"
 
 int main(int argc, char** argv)
@@ -21,9 +19,6 @@ try {
 	constexpr size_t es = 0;
 	//constexpr size_t capacity = 6;   // 2^3 accumulations of maxpos^2
 
-	posit<nbits, es> p;
-	p.set_raw_bits(0x8);
-
 	OperatorPerformance perfReport;
 	GeneratePerformanceReport<nbits, es>(perfReport);
 	ReportPerformance<nbits, es>(cout, "posit<4,0>", perfReport);
@@ -32,6 +27,22 @@ try {
 }
 catch (char const* msg) {
 	std::cerr << msg << std::endl;
+	return EXIT_FAILURE;
+}
+catch (const posit_arithmetic_exception& err) {
+	std::cerr << "Uncaught posit arithmetic exception: " << err.what() << std::endl;
+	return EXIT_FAILURE;
+}
+catch (const quire_exception& err) {
+	std::cerr << "Uncaught quire exception: " << err.what() << std::endl;
+	return EXIT_FAILURE;
+}
+catch (const posit_internal_exception& err) {
+	std::cerr << "Uncaught posit internal exception: " << err.what() << std::endl;
+	return EXIT_FAILURE;
+}
+catch (const std::runtime_error& err) {
+	std::cerr << "Uncaught runtime exception: " << err.what() << std::endl;
 	return EXIT_FAILURE;
 }
 catch (...) {
