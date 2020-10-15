@@ -1,19 +1,21 @@
-//  arithmetic.cpp :  test suite for bitblock-based arithmetic operators
+// arithmetic.cpp :  test suite for bitblock-based arithmetic operators
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2020 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
-#include "common.hpp"
-#include "../../posit/exceptions.hpp"	// TODO: remove namespace polution
-#include "../../bitblock/bitblock.hpp"
-#include "../tests/test_helpers.hpp"
-#include "../bitblock_test_helpers.hpp"
+#define BITBLOCK_THROW_ARITHMETIC_EXCEPTION 1
+#undef BITBLOCK_ROUND_TIES_AWAY_FROM_ZERO
+#undef BITBLOCK_ROUND_TIES_TO_ZERO
+#include "universal/bitblock/bitblock.hpp"
+// test helpers, such as, ReportTestResults
+#include "../utils/test_helpers.hpp"
+#include "bitblock_test_helpers.hpp"
 
 int Conversions() {
 	using namespace sw::unum;
 	const size_t nbits = 33;
 	int nrOfFailedTestCases = 0;
-	bitblock<nbits> a, b, ref, sum;
+	bitblock<nbits> a, b, ref;
 
 	std::cout << "Binary conversions" << std::endl;
 
@@ -23,30 +25,30 @@ int Conversions() {
 
 	b = convert_to_bitblock<nbits,uint64_t>(uint64_t(0x5));
 
-	std::cout << "1's complement of a = " << to_binary(ones_complement(a)) << std::endl;
+	std::cout << "1's complement of a = " << ones_complement(a) << std::endl;
 	ref = convert_to_bitblock<nbits, uint64_t>(uint64_t(0xAAAAAAAA));
 	nrOfFailedTestCases += (ones_complement(a) != ref ? 1 : 0);
-	std::cout << "1's complement of b = " << to_binary(ones_complement(b)) << std::endl;
+	std::cout << "1's complement of b = " << ones_complement(b) << std::endl;
 	ref = convert_to_bitblock<nbits, uint64_t>(uint64_t(0x1FFFFFFFA));
 	nrOfFailedTestCases += (ones_complement(b) != ref ? 1 : 0);
 
 	const size_t nnbits = 9;
 	bitblock<nnbits> c, ref2;
 	c = convert_to_bitblock<9,int8_t>(int8_t(-128));  // this looks like -1 for a 9bit posit
-	std::cout << "c                   = " << to_binary(c) << std::endl;
+	std::cout << "c                   = " << c << std::endl;
 	ref2 = convert_to_bitblock<nnbits, uint64_t>(uint64_t(0x180));
 	nrOfFailedTestCases += (c != ref2 ? 1 : 0);
 
 	c = twos_complement(c);							// this looks like  1 for a 9bit posit
-	std::cout << "2's Complement      = " << to_binary(c) << std::endl;
+	std::cout << "2's Complement      = " << c << std::endl;
 	ref2 = convert_to_bitblock<nnbits, uint64_t>(uint64_t(0x080));
 	nrOfFailedTestCases += (c != ref2 ? 1 : 0);
 
 	bitblock<9> d;
 	d = convert_to_bitblock<9,int64_t>(int64_t(int8_t(-128)));
-	std::cout << "d                   = " << to_binary(d) << std::endl;
+	std::cout << "d                   = " << d << std::endl;
 	d = twos_complement(d);
-	std::cout << "2's complement      = " << to_binary(d) << std::endl;
+	std::cout << "2's complement      = " << d << std::endl;
 	std::cout << std::endl;
 	nrOfFailedTestCases += (c != d ? 1 : 0);
 
@@ -55,12 +57,11 @@ int Conversions() {
 
 
 // ? what is this trying to test TODO
-int IncrementRightAdjustedBitset()
-{
+int IncrementRightAdjustedBitset() {
 	const size_t nbits = 5;
 	int nrOfFailedTestCases = 0;
 
-	sw::unum::bitblock<nbits> r1, ref;
+	sw::unum::bitblock<nbits> r1;
 	bool carry;
 
 	std::cout << "Increments" << std::endl;
@@ -91,7 +92,7 @@ int VerifyCopyInto(bool bReportIndividualTestCases = false) {
 		operand.set(i, true);
 	}
 
-	for (size_t i = 0; i < tgt_size - src_size; i++) {
+	for (size_t i = 0; i < tgt_size - src_size + 1; i++) {
 		sw::unum::copy_into<src_size, tgt_size>(operand, i, addend);
 
 		if (reference != addend) {
@@ -154,10 +155,10 @@ try {
 	div_with_fraction <<= result_size - nbits;
 	cout << "result " << div_with_fraction << endl;
 
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetAddition<3>(true), "bitblock<3>", "+");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetSubtraction<3>(true), "bitblock<3>", "-");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetMultiplication<3>(true), "bitblock<3>", "*");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetDivision<3>(true), "bitblock<3>", "/");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetAddition<3>(true), "bitblock<3>", "+");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetSubtraction<3>(true), "bitblock<3>", "-");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetMultiplication<3>(true), "bitblock<3>", "*");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetDivision<3>(true), "bitblock<3>", "/");
 
 #else
 
@@ -175,28 +176,28 @@ try {
 	nrOfFailedTestCases += ReportTestResult(VerifyCopyInto<8, 128>(bReportIndividualTestCases), "bitblock<128>", "copyInto");
 
 	cout << "Arithmetic: addition" << endl;
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetAddition<3>(bReportIndividualTestCases), "bitblock<3>", "+");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetAddition<4>(bReportIndividualTestCases), "bitblock<4>", "+");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetAddition<5>(bReportIndividualTestCases), "bitblock<5>", "+");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetAddition<6>(bReportIndividualTestCases), "bitblock<6>", "+");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetAddition<7>(bReportIndividualTestCases), "bitblock<7>", "+");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetAddition<8>(bReportIndividualTestCases), "bitblock<8>", "+");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetAddition<3>(bReportIndividualTestCases), "bitblock<3>", "+");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetAddition<4>(bReportIndividualTestCases), "bitblock<4>", "+");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetAddition<5>(bReportIndividualTestCases), "bitblock<5>", "+");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetAddition<6>(bReportIndividualTestCases), "bitblock<6>", "+");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetAddition<7>(bReportIndividualTestCases), "bitblock<7>", "+");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetAddition<8>(bReportIndividualTestCases), "bitblock<8>", "+");
 
 	cout << "Arithmetic: subtraction" << endl;
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetSubtraction<3>(bReportIndividualTestCases), "bitblock<3>", "-");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetSubtraction<4>(bReportIndividualTestCases), "bitblock<4>", "-");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetSubtraction<5>(bReportIndividualTestCases), "bitblock<5>", "-");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetSubtraction<6>(bReportIndividualTestCases), "bitblock<6>", "-");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetSubtraction<7>(bReportIndividualTestCases), "bitblock<7>", "-");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetSubtraction<8>(bReportIndividualTestCases), "bitblock<8>", "-");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetSubtraction<3>(bReportIndividualTestCases), "bitblock<3>", "-");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetSubtraction<4>(bReportIndividualTestCases), "bitblock<4>", "-");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetSubtraction<5>(bReportIndividualTestCases), "bitblock<5>", "-");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetSubtraction<6>(bReportIndividualTestCases), "bitblock<6>", "-");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetSubtraction<7>(bReportIndividualTestCases), "bitblock<7>", "-");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetSubtraction<8>(bReportIndividualTestCases), "bitblock<8>", "-");
 
 	cout << "Arithmetic: multiplication" << endl;
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetMultiplication<3>(bReportIndividualTestCases), "bitblock<3>", "*");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetMultiplication<4>(bReportIndividualTestCases), "bitblock<4>", "*");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetMultiplication<5>(bReportIndividualTestCases), "bitblock<5>", "*");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetMultiplication<6>(bReportIndividualTestCases), "bitblock<6>", "*");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetMultiplication<7>(bReportIndividualTestCases), "bitblock<7>", "*");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetMultiplication<8>(bReportIndividualTestCases), "bitblock<8>", "*");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetMultiplication<3>(bReportIndividualTestCases), "bitblock<3>", "*");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetMultiplication<4>(bReportIndividualTestCases), "bitblock<4>", "*");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetMultiplication<5>(bReportIndividualTestCases), "bitblock<5>", "*");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetMultiplication<6>(bReportIndividualTestCases), "bitblock<6>", "*");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetMultiplication<7>(bReportIndividualTestCases), "bitblock<7>", "*");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetMultiplication<8>(bReportIndividualTestCases), "bitblock<8>", "*");
 
 	cout << "Arithmetic: division" << endl;
 	bitblock<8> a, b;
@@ -204,26 +205,26 @@ try {
 	try {
 		integer_divide_unsigned(a, b, c); // divide by zero
 	}
-	catch (const integer_divide_by_zero& e) {
+	catch (const bitblock_divide_by_zero& e) {
 		cout << "Properly caught exception: " << e.what() << endl;
 	}
 	catch (...) {
 		cout << "Why can't I catch this specific exception type?" << endl;
 	}
 
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetDivision<3>(bReportIndividualTestCases), "bitblock<3>", "/");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetDivision<4>(bReportIndividualTestCases), "bitblock<4>", "/");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetDivision<5>(bReportIndividualTestCases), "bitblock<5>", "/");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetDivision<6>(bReportIndividualTestCases), "bitblock<6>", "/");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetDivision<7>(bReportIndividualTestCases), "bitblock<7>", "/");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetDivision<8>(bReportIndividualTestCases), "bitblock<8>", "/");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetDivision<3>(bReportIndividualTestCases), "bitblock<3>", "/");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetDivision<4>(bReportIndividualTestCases), "bitblock<4>", "/");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetDivision<5>(bReportIndividualTestCases), "bitblock<5>", "/");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetDivision<6>(bReportIndividualTestCases), "bitblock<6>", "/");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetDivision<7>(bReportIndividualTestCases), "bitblock<7>", "/");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetDivision<8>(bReportIndividualTestCases), "bitblock<8>", "/");
 
 #if STRESS_TESTING
 
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetAddition<16>(bReportIndividualTestCases), "bitblock<8>", "+");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetSubtraction<16>(bReportIndividualTestCases), "bitblock<8>", "-");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetMultiplication<16>(bReportIndividualTestCases), "bitblock<8>", "*");
-	nrOfFailedTestCases += ReportTestResult(ValidateBitsetDivision<16>(bReportIndividualTestCases), "bitblock<8>", "/");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetAddition<16>(bReportIndividualTestCases), "bitblock<8>", "+");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetSubtraction<16>(bReportIndividualTestCases), "bitblock<8>", "-");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetMultiplication<16>(bReportIndividualTestCases), "bitblock<8>", "*");
+	nrOfFailedTestCases += ReportTestResult(VerifyBitsetDivision<16>(bReportIndividualTestCases), "bitblock<8>", "/");
 
 #endif // STRESS_TESTING
 

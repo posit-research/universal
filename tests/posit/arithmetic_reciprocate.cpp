@@ -1,30 +1,36 @@
-// arithmetic_reciprocate.cpp: functional tests for arithmetic reciprocation
+// arithmetic_reciprocate.cpp: functional tests for posit arithmetic reciprocation
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2020 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
-#include "common.hpp"
-
+// Configure the posit template environment
+// first: enable general or specialized posit configurations
+//#define POSIT_FAST_SPECIALIZATION
+// second: enable/disable posit arithmetic exceptions
+#define POSIT_THROW_ARITHMETIC_EXCEPTION 0
+// third: enable tracing 
 // when you define POSIT_VERBOSE_OUTPUT executing an reciprocate the code will print intermediate results
 //#define POSIT_VERBOSE_OUTPUT
 #define POSIT_TRACE_RECIPROCATE
 #define POSIT_TRACE_CONVERSION
+
 // minimum set of include files to reflect source code dependencies
-// enable/disable posit arithmetic exceptions
-#define POSIT_THROW_ARITHMETIC_EXCEPTION 0
-#include "../../posit/posit.hpp"
-#include "../../posit/posit_decoded.hpp"		// old reference design for validation/debug
-#include "../../posit/posit_manipulators.hpp"
-#include "../tests/test_helpers.hpp"
-#include "../tests/posit_test_helpers.hpp"
+#include "universal/posit/posit.hpp"
+#include "universal/posit/numeric_limits.hpp"
+#include "universal/posit/specializations.hpp"
+// posit type manipulators such as pretty printers
+#include "universal/posit/posit_manipulators.hpp"
+// test helpers, such as, ReportTestResults
+#include "../utils/test_helpers.hpp"
+#include "../utils/posit_test_helpers.hpp"
 
 // generate specific test case that you can trace with the trace conditions in posit.hpp
 // Most bugs are traceable with _trace_conversion and _trace_add
 template<size_t nbits, size_t es, typename Ty>
 void GenerateTestCase(Ty a) {
 	Ty reference;
-	sw::unum::posit_decoded<nbits, es> pa, pref, preciprocal;
+	sw::unum::posit<nbits, es> pa, pref, preciprocal;
 	pa = a;
 	reference = (Ty)1.0 / a;
 	pref = reference;
@@ -51,7 +57,7 @@ try {
 	// generate individual testcases to hand trace/debug
 	posit<5, 0> p1(0.75);
 	posit<5, 0> p1_reciprocal;
-	posit_decoded<5, 0> p2(0.75), p2_reciprocal;
+	posit<5, 0> p2(0.75), p2_reciprocal;
 
 	p2_reciprocal = p2.reciprocate();
 	p1_reciprocal = p1.reciprocate();

@@ -1,12 +1,11 @@
 // lookup_arithmetic.cpp: generate tables for small posit lookup arithmetic
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2019 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
-#include "common.hpp"
 #include <chrono>
-#include <posit>
+#include <universal/posit/posit>
 
 enum BINARY_ARITHMETIC_OPERATOR {
 	ADD = 0,
@@ -15,18 +14,23 @@ enum BINARY_ARITHMETIC_OPERATOR {
 	DIV = 3
 };
 
+enum BINARY_LOGIC_OPERATOR {
+	LT  = 0,
+	LTE = 1,
+	GT  = 2,
+	GTE = 3
+};
+
 enum UNARY_ARITHMETIC_OPERATOR {
 	RECIPROCAL	= 4,
 	SQRT		= 5
 };
 
-// generate a look-up table for addition
+// generate a look-up table for arithmetic
 template<size_t nbits, size_t es>
 void GenerateLookupTable(BINARY_ARITHMETIC_OPERATOR op) {
 	constexpr size_t nr_of_posits = (1 << nbits);
 	sw::unum::posit<nbits, es> pa, pb, presult;
-	unsigned long long mask = nr_of_posits - 1;
-	unsigned long long base;
 	for (size_t i = 0; i < nr_of_posits; i++) {
 		pa.set_raw_bits(i);
 		for (size_t j = 0; j < nr_of_posits; j++) {
@@ -46,7 +50,7 @@ void GenerateLookupTable(BINARY_ARITHMETIC_OPERATOR op) {
 				break;
 			}
 
-			base = pa.get().to_ullong() << nbits | pb.get().to_ullong();
+			//unsigned long long base = pa.get().to_ullong() << nbits | pb.get().to_ullong();
 			//std::cout << std::hex << base << " " << presult.get() << std::endl;
 			std::cout << presult.get().to_ulong() << ",";
 		}
@@ -54,6 +58,69 @@ void GenerateLookupTable(BINARY_ARITHMETIC_OPERATOR op) {
 	}
 }
 
+// generate a look-up table for logic operator
+template<size_t nbits, size_t es>
+void GenerateLookupTable(BINARY_LOGIC_OPERATOR op) {
+	constexpr size_t nr_of_posits = (1 << nbits);
+	sw::unum::posit<nbits, es> pa, pb;
+	bool result;
+	for (size_t i = 0; i < nr_of_posits; i++) {
+		pa.set_raw_bits(i);
+		for (size_t j = 0; j < nr_of_posits; j++) {
+			pb.set_raw_bits(j);
+			switch (op) {
+			case LT:
+				result = pa < pb;
+				break;
+			case LTE:
+				result = pa <= pb;
+				break;
+			case GT:
+				result = pa > pb;
+				break;
+			case GTE:
+				result = pa >= pb;
+				break;
+			}
+
+			//unsigned long long base = pa.get().to_ullong() << nbits | pb.get().to_ullong();
+			//std::cout << std::hex << base << " " << presult.get() << std::endl;
+			std::cout << result << ",";
+		}
+		std::cout << std::endl;
+	}
+}
+
+// generate a look-up table for uniary operators
+template<size_t nbits, size_t es>
+void GenerateLookupTable(UNARY_ARITHMETIC_OPERATOR op) {
+	constexpr size_t nr_of_posits = (1 << nbits);
+	sw::unum::posit<nbits, es> pa, presult;
+
+	std::cout << std::hex;
+	for (size_t i = 0; i < nr_of_posits; i += 8) {
+		for (int j = 0; j < 8; ++j) {
+			size_t index = i + j;
+			//std::cout << "index[" << index << "]";
+			pa.set_raw_bits(index);
+			switch (op) {
+			case RECIPROCAL:
+				presult = 1.0 / pa;
+				std::cout << "0x" << std::hex << presult.get().to_ulong() << ",";
+				break;
+			case SQRT:
+				if (pa.ispos() || pa.iszero()) {
+					presult = sw::unum::sqrt(pa);
+					std::cout << "0x" << std::hex << presult.get().to_ulong() << ",";
+				}
+				break;
+			}
+
+			//std::cout << std::hex << base << " " << presult.get() << std::endl;
+		}
+		std::cout << std::dec << std::endl;
+	}
+}
 
 namespace sw {
 	namespace spec {
@@ -232,16 +299,41 @@ try {
 	using namespace std::chrono;
 	int positives, negatives;
 
-
 	steady_clock::time_point begin, end;
 	duration<double> time_span;
 	double elapsed;
 
+#ifdef NOW
 	//Validate5_0_Lookup();
-	//GenerateLookupTable<4, 0>(ADD);
-	//GenerateLookupTable<4, 0>(SUB);
-	//GenerateLookupTable<4, 0>(MUL);
-	//GenerateLookupTable<4, 0>(DIV);
+	cout << "constexpr uint8_t posit_3_0_addition_lookup[64] = {\n";
+	GenerateLookupTable<3, 0>(ADD);
+	cout << "};\n";
+	cout << "constexpr uint8_t posit_3_0_subtraction_lookup[64] = {\n";
+	GenerateLookupTable<3, 0>(SUB);
+	cout << "};\n";
+	cout << "constexpr uint8_t posit_3_0_multiplication_lookup[64] = {\n";
+	GenerateLookupTable<3, 0>(MUL);
+	cout << "};\n";
+	cout << "constexpr uint8_t posit_3_0_division_lookup[64] = {\n";
+	GenerateLookupTable<3, 0>(DIV);
+	cout << "};\n";
+	cout << "constexpr bool posit_3_0_less_than_lookup[64] = {\n";
+	GenerateLookupTable<3, 0>(LT);
+	cout << "};\n";
+
+	cout << "constexpr uint8_t posit_4_0_addition_lookup[256] = {\n";
+	GenerateLookupTable<4, 0>(ADD);
+	cout << "};\n";
+	cout << "constexpr uint8_t posit_4_0_subtraction_lookup[256] = {\n";
+	GenerateLookupTable<4, 0>(SUB);
+	cout << "};\n";
+	cout << "constexpr uint8_t posit_4_0_multiplication_lookup[256] = {\n";
+	GenerateLookupTable<4, 0>(MUL);
+	cout << "};\n";
+	cout << "constexpr uint8_t posit_4_0_division_lookup[256] = {\n";
+	GenerateLookupTable<4, 0>(DIV);
+	cout << "};\n";
+#endif
 
 	begin = steady_clock::now();
 	MeasureAdditionPerformance<5, 0>(positives, negatives);
@@ -253,6 +345,7 @@ try {
 	cout << elapsed << endl;
 	cout << positives << " " << negatives << endl;
 
+	GenerateLookupTable<8, 1>(SQRT);
 
 	return EXIT_SUCCESS;
 }

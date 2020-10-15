@@ -1,20 +1,30 @@
-// arithmetic_subtract.cpp: functional tests for subtraction
+// arithmetic_subtract.cpp: functional tests for posit subtraction
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2020 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
-#include "common.hpp"
 
+// Configure the posit template environment
+// first: enable  general or specialized posit configurations
+//#define POSIT_FAST_SPECIALIZATION
+// second: enable/disable posit arithmetic exceptions
+#define POSIT_THROW_ARITHMETIC_EXCEPTION 0
+// third: enable tracing 
 // when you define POSIT_VERBOSE_OUTPUT executing an SUB the code will print intermediate results
 //#define POSIT_VERBOSE_OUTPUT
 #define POSIT_TRACE_SUB
+
 // minimum set of include files to reflect source code dependencies
-// enable/disable posit arithmetic exceptions
-#define POSIT_THROW_ARITHMETIC_EXCEPTION 0
-#include "../../posit/posit.hpp"
-#include "../../posit/posit_manipulators.hpp"
-#include "../tests/test_helpers.hpp"
-#include "../tests/posit_test_helpers.hpp"
+#include "universal/posit/posit.hpp"
+#include "universal/posit/numeric_limits.hpp"
+#include "universal/posit/specializations.hpp"
+// posit type manipulators such as pretty printers
+#include "universal/posit/posit_manipulators.hpp"
+#include "universal/posit/math_functions.hpp"
+// test helpers, such as, ReportTestResults
+#include "../utils/test_helpers.hpp"
+#include "../utils/posit_math_helpers.hpp"
+#include "../utils/posit_test_randoms.hpp"
 
 // generate specific test case that you can trace with the trace conditions in posit.h
 // for most bugs they are traceable with _trace_conversion and _trace_sub
@@ -81,18 +91,23 @@ try {
 
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<3, 0>(tag, bReportIndividualTestCases), "posit<3,0>", "subtraction");
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<3, 1>(tag, bReportIndividualTestCases), "posit<3,1>", "subtraction");
+	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<3, 2>(tag, bReportIndividualTestCases), "posit<3,2>", "subtraction");
+	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<3, 3>(tag, bReportIndividualTestCases), "posit<3,3>", "subtraction");
 
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<4, 0>(tag, bReportIndividualTestCases), "posit<4,0>", "subtraction");
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<4, 1>(tag, bReportIndividualTestCases), "posit<4,1>", "subtraction");
+	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<4, 2>(tag, bReportIndividualTestCases), "posit<4,2>", "subtraction");
 
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<5, 0>(tag, bReportIndividualTestCases), "posit<5,0>", "subtraction");
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<5, 1>(tag, bReportIndividualTestCases), "posit<5,1>", "subtraction");
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<5, 2>(tag, bReportIndividualTestCases), "posit<5,2>", "subtraction");
+	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<5, 3>(tag, bReportIndividualTestCases), "posit<5,3>", "subtraction");
 
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<6, 0>(tag, bReportIndividualTestCases), "posit<6,0>", "subtraction");
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<6, 1>(tag, bReportIndividualTestCases), "posit<6,1>", "subtraction");
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<6, 2>(tag, bReportIndividualTestCases), "posit<6,2>", "subtraction");
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<6, 3>(tag, bReportIndividualTestCases), "posit<6,3>", "subtraction");
+	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<6, 4>(tag, bReportIndividualTestCases), "posit<6,4>", "subtraction");
 
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<7, 0>(tag, bReportIndividualTestCases), "posit<7,0>", "subtraction");
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<7, 1>(tag, bReportIndividualTestCases), "posit<7,1>", "subtraction");
@@ -107,10 +122,10 @@ try {
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<8, 4>(tag, bReportIndividualTestCases), "posit<8,4>", "subtraction");
 	nrOfFailedTestCases += ReportTestResult(ValidateSubtraction<8, 5>(tag, bReportIndividualTestCases), "posit<8,5>", "subtraction");
 
-	nrOfFailedTestCases += ReportTestResult(ValidateThroughRandoms<16, 1>(tag, bReportIndividualTestCases, OPCODE_SUB, 1000), "posit<16,1>", "subtraction");
-	nrOfFailedTestCases += ReportTestResult(ValidateThroughRandoms<24, 1>(tag, bReportIndividualTestCases, OPCODE_SUB, 1000), "posit<24,1>", "subtraction");
-	nrOfFailedTestCases += ReportTestResult(ValidateThroughRandoms<32, 1>(tag, bReportIndividualTestCases, OPCODE_SUB, 1000), "posit<32,1>", "subtraction");
-	nrOfFailedTestCases += ReportTestResult(ValidateThroughRandoms<32, 2>(tag, bReportIndividualTestCases, OPCODE_SUB, 1000), "posit<32,2>", "subtraction");
+	nrOfFailedTestCases += ReportTestResult(ValidateBinaryOperatorThroughRandoms<16, 1>(tag, bReportIndividualTestCases, OPCODE_SUB, 1000), "posit<16,1>", "subtraction");
+	nrOfFailedTestCases += ReportTestResult(ValidateBinaryOperatorThroughRandoms<24, 1>(tag, bReportIndividualTestCases, OPCODE_SUB, 1000), "posit<24,1>", "subtraction");
+	nrOfFailedTestCases += ReportTestResult(ValidateBinaryOperatorThroughRandoms<32, 1>(tag, bReportIndividualTestCases, OPCODE_SUB, 1000), "posit<32,1>", "subtraction");
+	nrOfFailedTestCases += ReportTestResult(ValidateBinaryOperatorThroughRandoms<32, 2>(tag, bReportIndividualTestCases, OPCODE_SUB, 1000), "posit<32,2>", "subtraction");
 
 #if STRESS_TESTING
 	// nbits=48 is showing failures

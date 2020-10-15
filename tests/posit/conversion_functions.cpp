@@ -1,13 +1,12 @@
 // conversion_functions.cpp : api experiments for conversion algorithms
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2019 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
-#include "common.hpp"
-
-#include "../../posit/posit.hpp"
-#include "../../posit/posit_manipulators.hpp"
+// minimum set of include files
+#include "universal/posit/posit.hpp"
+#include "universal/posit/posit_manipulators.hpp"
 
 template<size_t nbits, size_t es>
 void GenerateLogicPattern(double input, const sw::unum::posit<nbits, es>& presult, const sw::unum::posit<nbits + 1, es>& pnext) {
@@ -35,11 +34,10 @@ void GenerateLogicPatternsForDebug() {
 	sw::unum::posit<nbits + 1, es> pref, pprev, pnext;
 
 	// execute the test
-	int nrOfFailedTests = 0;
 	const double eps = 1.0e-10;  // TODO for big posits, eps is important to resolve differences
 	double da, input;
 	sw::unum::posit<nbits, es> pa;
-	std::cout << sw::unum::spec_to_string(pa) << std::endl;
+	std::cout << sw::unum::dynamic_range(pa) << std::endl;
 	for (int i = 0; i < NR_TEST_CASES; i++) {
 		pref.set_raw_bits(i);
 		da = double(pref);
@@ -369,7 +367,7 @@ void convert_to_posit(float x, bool bPrintIntermediateSteps = false) {
 	CopyLowerSegment(ptt, ptt_t);
 	posit<nbits, es> p;
 	p.set_raw_bits(ptt_t.to_ullong());
-	cout << "p = " << components_to_string(p) << endl;
+	cout << "p = " << components(p) << endl;
 }
 
 template<size_t nbits, size_t es, size_t nrfbits>
@@ -381,8 +379,8 @@ sw::unum::posit<nbits, es> convert_to_posit(sw::unum::value<nrfbits> v, bool bPr
 	// ignore for the sake of clarity the special cases 0 and NaR (Not a Real)
 	bitblock<nrfbits> bits = v.fraction();
 
-	float minpos = (float)sw::unum::minpos_value<nbits, es>();
-	float maxpos = (float)sw::unum::maxpos_value<nbits, es>();
+	//float minpos = (float)sw::unum::minpos_value<nbits, es>();
+	//float maxpos = (float)sw::unum::maxpos_value<nbits, es>();
 
 	const size_t pt_len = nbits + 3 + es;
 	bitblock<pt_len> pt_bits;
@@ -476,7 +474,6 @@ sw::unum::posit<nbits, es> convert_to_posit(sw::unum::value<nrfbits> v, bool bPr
 template<size_t nbits, size_t es>
 void posit_component_conversion(float x, bool bPrintIntermediateSteps = false) {
 	sw::unum::value<23> v(x);
-	bool sign = v.sign();
 	int scale = v.scale();
 	
 	unsigned run = (scale >= 0 ? 1 + (scale >> es) : -scale >> es);
@@ -568,7 +565,7 @@ void GenerateTestSample(int quadrant, bool bPrintIntermediateSteps = false) {
 
 	posit<nbits, es> p;
 	cout << endl << endl << "-------------------------------------------" << endl;
-	cout << spec_to_string(p) << endl;
+	cout << dynamic_range(p) << endl;
 	cout << components_to_string(p) << endl;
 
 	int index;

@@ -1,20 +1,21 @@
 // arithmetic_fma.cpp: functional tests for fused-multiply-add
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2020 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
-#include "common.hpp"
+#include <cstdint>	// uint8_t, etc.
+#include <cmath>	// for frexp/frexpf and std::fma
+#include <cfenv>	// feclearexcept/fetestexcept
 
-// when you define POSIT_VERBOSE_OUTPUT executing an SUB the code will print intermediate results
-//#define POSIT_VERBOSE_OUTPUT
-#define POSIT_TRACE_SUB
 // minimum set of include files to reflect source code dependencies
 // enable/disable posit arithmetic exceptions
 #define POSIT_THROW_ARITHMETIC_EXCEPTION 0
-#include "../../posit/posit.hpp"
-#include "../../posit/posit_manipulators.hpp"
-#include "../tests/test_helpers.hpp"
-#include "../tests/posit_test_helpers.hpp"
+#include "universal/posit/posit.hpp"
+// posit type manipulators such as pretty printers
+#include "universal/posit/posit_manipulators.hpp"
+// test helpers, such as, ReportTestResults
+#include "../utils/test_helpers.hpp"
+#include "../utils/posit_math_helpers.hpp"
 
 // generate specific test case that you can trace with the trace conditions in posit.h
 // for most bugs they are traceable with _trace_conversion and _trace_sub
@@ -56,13 +57,40 @@ try {
 
 #if MANUAL_TESTING
 
-	//ReportSizeof();
-	//ReportFmaResults();
-	//ReportErrors():
+	ReportSizeof();
+	ReportFmaResults();
+	ReportErrors();
 
-	GenerateTestCase<16, 1, double>(0.1, 10, -1);
-	GenerateTestCase<32, 2, double>(0.1, 10, -1);
-	//GenerateTestCase<64, 3, double>(0.1, 10, -1);
+	{
+		double da(0.25), db(0.0), dc(0.0);
+		posit<64, 3> pa, pb, pc, pfma;
+		pa = da;
+		pb = db;
+		pc = dc;
+		pfma = sw::unum::fma(pa, pb, pc);
+		if (da*db + dc != 0.0)  cout << "Incorrect:  ";
+		cout << pfma << " : " << (long double)(pfma) << endl;
+	}
+
+	{
+		double da(0.25), db(0.0), dc(1.0);
+		posit<64, 3> pa, pb, pc, pfma;
+		pa = da;
+		pb = db;
+		pc = dc;
+		pfma = sw::unum::fma(pa, pb, pc);
+		if (da*db + dc != 1.0)  cout << "Incorrect:  ";
+		cout << pfma << " : " << (long double)(pfma) << endl;
+	}
+
+	return 0;
+	{
+		// this is not a good test case, because 0.1 is not representable in binary so you get round-off in the conversion
+		GenerateTestCase<16, 1, double>(0.1, 10, -1);
+		GenerateTestCase<32, 2, double>(0.1, 10, -1);
+		GenerateTestCase<64, 3, double>(0.1, 10, -1);
+	}
+
 
 #else
 
@@ -123,7 +151,7 @@ void ReportSizeof()
 	posit<64, 3> p64_3;
 	value<64> v64;
 
-	cout << "sizeof(posit< 8,0>)    = " << sizeof(p8_0) << " bytes" << endl;
+	cout << "sizeof(posit< 8,0>)    = " << sizeof(p8_0)  << " bytes" << endl;
 	cout << "sizeof(posit<16,1>)    = " << sizeof(p16_1) << " bytes" << endl;
 	cout << "sizeof(posit<32,2>)    = " << sizeof(p32_2) << " bytes" << endl;
 	cout << "sizeof(posit<64,3>)    = " << sizeof(p64_3) << " bytes" << endl;
@@ -136,22 +164,43 @@ void ReportSizeof()
 	cout << "sizeof(exponent<32,2>) = " << sizeof(e32_2) << " bytes" << endl;
 	cout << "sizeof(fraction<32,2>) = " << sizeof(f32_2) << " bytes" << endl;
 
-	cout << "sizeof(value<8 >)      = " << sizeof(value<8>) << " bytes" << endl;
-	cout << "sizeof(value<16>)      = " << sizeof(value<16>) << " bytes" << endl;
-	cout << "sizeof(value<32>)      = " << sizeof(value<32>) << " bytes" << endl;
-	cout << "sizeof(value<64>)      = " << sizeof(value<64>) << " bytes" << endl;
+	cout << "sizeof(value<8 >)      = " << sizeof(v8)  << " bytes" << endl;
+	cout << "sizeof(value<16>)      = " << sizeof(v16) << " bytes" << endl;
+	cout << "sizeof(value<32>)      = " << sizeof(v32) << " bytes" << endl;
+	cout << "sizeof(value<64>)      = " << sizeof(v64) << " bytes" << endl;
 
 //	cout << "sizeof(bitset<8 >)     = " << sizeof(std::bitset<8>) << " bytes" << endl;
 //	cout << "sizeof(bitset<16>)     = " << sizeof(std::bitset<16>) << " bytes" << endl;
 //	cout << "sizeof(bitset<32>)     = " << sizeof(std::bitset<32>) << " bytes" << endl;
 //	cout << "sizeof(bitset<64>)     = " << sizeof(std::bitset<64>) << " bytes" << endl;
 
-	cout << "sizeof(bitblock<8 >)   = " << sizeof(bitblock<8>) << " bytes" << endl;
+	cout << "sizeof(bitblock< 4>)   = " << sizeof(bitblock<4>) << " bytes" << endl;
+	cout << "sizeof(bitblock< 8>)   = " << sizeof(bitblock<8>) << " bytes" << endl;
 	cout << "sizeof(bitblock<16>)   = " << sizeof(bitblock<16>) << " bytes" << endl;
 	cout << "sizeof(bitblock<32>)   = " << sizeof(bitblock<32>) << " bytes" << endl;
+	cout << "sizeof(bitblock<48>)   = " << sizeof(bitblock<48>) << " bytes" << endl;
 	cout << "sizeof(bitblock<64>)   = " << sizeof(bitblock<64>) << " bytes" << endl;
+	cout << "sizeof(bitblock<80>)   = " << sizeof(bitblock<80>) << " bytes" << endl;
+	cout << "sizeof(bitblock<96>)   = " << sizeof(bitblock<96>) << " bytes" << endl;
+	cout << "sizeof(bitblock<112>)  = " << sizeof(bitblock<112>) << " bytes" << endl;
+	cout << "sizeof(bitblock<128>)  = " << sizeof(bitblock<128>) << " bytes" << endl;
+
+	cout << "sizeof(posit< 4,0>)    = " << sizeof(posit<4,0>) << " bytes" << endl;
+	cout << "sizeof(posit< 8,0>)    = " << sizeof(posit<8,0>) << " bytes" << endl;
+	cout << "sizeof(posit<16,1>)    = " << sizeof(posit<16,1>) << " bytes" << endl;
+	cout << "sizeof(posit<32,2>)    = " << sizeof(posit<32,2>) << " bytes" << endl;
+	cout << "sizeof(posit<48,2>)    = " << sizeof(posit<48,2>) << " bytes" << endl;
+	cout << "sizeof(posit<64,3>)    = " << sizeof(posit<64,3>) << " bytes" << endl;
+	cout << "sizeof(posit<80,3>)    = " << sizeof(posit<80,3>) << " bytes" << endl;
+	cout << "sizeof(posit<96,3>)    = " << sizeof(posit<96,3>) << " bytes" << endl;
+	cout << "sizeof(posit<112,4>)   = " << sizeof(posit<112,4>) << " bytes" << endl;
+	cout << "sizeof(posit<128,4>)   = " << sizeof(posit<128,4>) << " bytes" << endl;
 
 	cout << "sizeof(bool)           = " << sizeof(bool) << " bytes" << endl;
+	cout << "sizeof(uint8_t)        = " << sizeof(uint8_t) << " bytes" << endl;
+	cout << "sizeof(uint16_t)       = " << sizeof(uint16_t) << " bytes" << endl;
+	cout << "sizeof(uint32_t)       = " << sizeof(uint32_t) << " bytes" << endl;
+	cout << "sizeof(uint64_t)       = " << sizeof(uint64_t) << " bytes" << endl;
 }
 
 void ReportFmaResults()

@@ -1,12 +1,12 @@
 // tables.cpp: create detailed component tables that spell out all the components that make up a posit
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-201 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
-#include "common.hpp"
-#include <posit>
-
+// enable/disable special posit format I/O
+#define POSIT_ROUNDING_ERROR_FREE_IO_FORMAT 1
+#include <universal/posit/posit>
 
 /*
   Posit values are a combination of 
@@ -25,28 +25,42 @@ try {
 	using namespace std;
 	using namespace sw::unum;
 
-	//int nrOfFailedTestCases = 0;
 	bool csv = false;
 
 	cout << "Generate posit configurations" << endl;
 
 	// TODO: need to re-enable nbits = 2
-	//GeneratePositTable<2, 0>(cout, csv);
+	GeneratePositTable<2, 0>(cout, csv);
 
 	GeneratePositTable<3, 0>(cout, csv);
-	//GeneratePositTable<3, 1>(cout, csv);
+	GeneratePositTable<3, 1>(cout, csv);
+	GeneratePositTable<3, 2>(cout, csv);
+	GeneratePositTable<3, 3>(cout, csv);
+	GeneratePositTable<3, 4>(cout, csv);
+	GeneratePositTable<3, 5>(cout, csv);
 
 	GeneratePositTable<4, 0>(cout, csv);
 	GeneratePositTable<4, 1>(cout, csv);
+	GeneratePositTable<4, 2>(cout, csv);
+	GeneratePositTable<4, 3>(cout, csv);
+	GeneratePositTable<4, 4>(cout, csv);
+	GeneratePositTable<4, 5>(cout, csv);
+	GeneratePositTable<4, 6>(cout, csv);
 
 	GeneratePositTable<5, 0>(cout, csv);
 	GeneratePositTable<5, 1>(cout, csv);
 	GeneratePositTable<5, 2>(cout, csv);
+	GeneratePositTable<5, 3>(cout, csv);
+	GeneratePositTable<5, 4>(cout, csv);
+	GeneratePositTable<5, 5>(cout, csv);
 
 	GeneratePositTable<6, 0>(cout, csv);
 	GeneratePositTable<6, 1>(cout, csv);
 	GeneratePositTable<6, 2>(cout, csv);
 	GeneratePositTable<6, 3>(cout, csv);
+	GeneratePositTable<6, 4>(cout, csv);
+	GeneratePositTable<6, 5>(cout, csv);
+	GeneratePositTable<6, 6>(cout, csv);
 
 	GeneratePositTable<7, 0>(cout, csv);
 	GeneratePositTable<7, 1>(cout, csv);

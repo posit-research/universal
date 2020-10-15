@@ -1,28 +1,35 @@
-// arithmetic_literals.cpp: functional tests for addition
+// arithmetic_literals.cpp: functional tests for the use of literals in posit equations
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2020 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
-#include "common.hpp"
-
+// Configure the posit template environment
+// first: enable general or specialized specialized posit configurations
+//#define POSIT_FAST_SPECIALIZATION
+// second: enable/disable posit arithmetic exceptions
+#define POSIT_THROW_ARITHMETIC_EXCEPTION 0
+// third: enable tracing 
 // when you define POSIT_VERBOSE_OUTPUT executing an ADD the code will print intermediate results
 //#define POSIT_VERBOSE_OUTPUT
 #define POSIT_TRACE_ADD
-// minimum set of include files to reflect source code dependencies
-// enable/disable posit arithmetic exceptions
-#define POSIT_THROW_ARITHMETIC_EXCEPTION 0
-// enable/disable the ability to use literals in binary logic and arithmetic operators
+// forth: enable/disable the ability to use literals in binary logic and arithmetic operators
 #define POSIT_ENABLE_LITERALS 1
-#include "../../posit/posit.hpp"
-#include "../../posit/posit_manipulators.hpp"
-// generic and posit test helper functions
-#include "../tests/test_helpers.hpp"
-#include "../tests/posit_test_helpers.hpp"
+
+// minimum set of include files to reflect source code dependencies
+#include "universal/posit/posit.hpp"
+#include "universal/posit/numeric_limits.hpp"
+#include "universal/posit/specializations.hpp"
+// posit type manipulators such as pretty printers
+#include "universal/posit/posit_manipulators.hpp"
+// test helpers, such as, ReportTestResults
+#include "../utils/test_helpers.hpp"
+#include "../utils/posit_math_helpers.hpp"
+
 
 // enumerate all addition cases for a posit configuration: is within 10sec till about nbits = 14
 template<size_t nbits, size_t es>
-int ValidateAdditionWithLiteral(std::string tag, bool bReportIndividualTestCases) {
+int ValidateAdditionWithLiteral(const std::string& tag, bool bReportIndividualTestCases) {
 	const int NR_POSITS = (unsigned(1) << nbits);
 	int nrOfFailedTests = 0;
 	sw::unum::posit<nbits, es> pa, pb, psum1, psum2, pref;
@@ -52,7 +59,7 @@ int ValidateAdditionWithLiteral(std::string tag, bool bReportIndividualTestCases
 
 // enumerate all subtraction cases for a posit configuration
 template<size_t nbits, size_t es>
-int ValidateSubtractionWithLiteral(std::string tag, bool bReportIndividualTestCases) {
+int ValidateSubtractionWithLiteral(const std::string& tag, bool bReportIndividualTestCases) {
 	const int NR_POSITS = (unsigned(1) << nbits);
 	int nrOfFailedTests = 0;
 	sw::unum::posit<nbits, es> pa, pb, pdiff1, pdiff2, pref;
@@ -82,7 +89,7 @@ int ValidateSubtractionWithLiteral(std::string tag, bool bReportIndividualTestCa
 
 // enumerate all multiplication cases for a posit configuration
 template<size_t nbits, size_t es>
-int ValidateMultiplicationWithLiteral(std::string tag, bool bReportIndividualTestCases) {
+int ValidateMultiplicationWithLiteral(const std::string& tag, bool bReportIndividualTestCases) {
 	const int NR_POSITS = (unsigned(1) << nbits);
 	int nrOfFailedTests = 0;
 	sw::unum::posit<nbits, es> pa, pb, pmul1, pmul2, pref;
@@ -112,7 +119,7 @@ int ValidateMultiplicationWithLiteral(std::string tag, bool bReportIndividualTes
 
 // enumerate all division cases for a posit configuration
 template<size_t nbits, size_t es>
-int ValidateDivisionWithLiteral(std::string tag, bool bReportIndividualTestCases) {
+int ValidateDivisionWithLiteral(const std::string& tag, bool bReportIndividualTestCases) {
 	const int NR_POSITS = (unsigned(1) << nbits);
 	int nrOfFailedTests = 0;
 	sw::unum::posit<nbits, es> pa, pb, pdiv1, pdiv2, pref;

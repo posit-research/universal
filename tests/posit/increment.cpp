@@ -1,17 +1,14 @@
 // increment.cpp: functional tests for increment operator
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2020 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
-#include "common.hpp"
-#include <vector>
-#include <algorithm>
-
-#include "../../posit/posit.hpp"
-#include "../../posit/posit_manipulators.hpp"
-#include "../tests/test_helpers.hpp"
-#include "../tests/posit_test_helpers.hpp"
+#include "universal/posit/posit.hpp"
+#include "universal/posit/posit_manipulators.hpp"
+// test helpers, such as, ReportTestResults
+#include "../utils/test_helpers.hpp"
+#include "../utils/posit_test_helpers.hpp"
 
 #define MANUAL_TESTING 0
 #define STRESS_TESTING 0
@@ -25,14 +22,15 @@ try {
 	int nrOfFailedTestCases = 0;
 
 #if MANUAL_TESTING
-	const size_t nbits = 5;
-	const size_t es = 0;
+	constexpr size_t nbits = 5;
+	constexpr size_t es = 0;
+	using Scalar = posit<nbits, es>;
 	const std::string positConfig = "posit<5,0>";
-	std::vector< posit<nbits,es> > set;
+	std::vector< Scalar > set;
 	GenerateOrderedPositSet<nbits, es>(set);
-	for (typename std::vector< posit<nbits, es> >::iterator it = set.begin(); it != set.end(); it++) {
-		std::cout << it->get() << " " << *it << std::endl;
-	}
+	for_each(begin(set), end(set), [](const Scalar& s){
+		std::cout << s.get() << " " << s << std::endl;
+	});
 
 	nrOfFailedTestCases += ReportTestResult(ValidateIncrement<nbits, es>("Increment failed", bReportIndividualTestCases), positConfig, "operator++");
 

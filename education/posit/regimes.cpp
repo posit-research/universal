@@ -1,14 +1,13 @@
 //  regimes.cpp : examples of working with posit regimes
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2019 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
-#include "common.hpp"
-#include <posit>
+#include <universal/posit/posit>
 
 // test reporting helper
-int ReportTestResult(int nrOfFailedTests, std::string description, std::string test_operation)
+int ReportTestResult(int nrOfFailedTests, const std::string& description, const std::string& test_operation)
 {
 	if (nrOfFailedTests > 0) {
 		std::cout << description << " " << test_operation << " FAIL " << nrOfFailedTests << " failed test cases" << std::endl;
@@ -34,7 +33,7 @@ Regime range example for a posit<6,es>
 	 11111          4
 */
 template<size_t nbits, size_t es>
-int ValidateRegimeOperations(std::string tag, bool bReportIndividualTestCases) {
+int ValidateRegimeOperations(const std::string& tag, bool bReportIndividualTestCases) {
 	constexpr int NR_TEST_CASES = int(nbits);
 	int nrOfFailedTestCases = 0;
 
@@ -56,7 +55,7 @@ int ValidateRegimeOperations(std::string tag, bool bReportIndividualTestCases) {
 
 
 template<size_t nbits, size_t es>
-int ValidateInwardProjection(std::string tag, bool bReportIndividualTestCases) {
+int ValidateInwardProjection(const std::string& tag, bool bReportIndividualTestCases) {
 	int nrOfFailedTests = 0;
 	unsigned useed_scale = unsigned(1) << es;
 
@@ -78,12 +77,11 @@ int ValidateInwardProjection(std::string tag, bool bReportIndividualTestCases) {
 }
 
 template<size_t nbits, size_t es>
-int ValidateRegimeScales(std::string tag, bool bReportIndividualTestCases) {
+int ValidateRegimeScales(const std::string& tag, bool bReportIndividualTestCases) {
 	int nrOfFailedTests = 0;
 	int useed_scale = int(1) << es;  // int because we are doing int math with it
 
 	sw::unum::regime<nbits, es> r1;
-	sw::unum::posit<nbits, es> p; // for check_inward_projection_range
 	// scale represents the binary scale of a value to test
 	int size = int(nbits);
 	for (int k = (-size + 1); k <= (size - 1); k++) {

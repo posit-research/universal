@@ -1,19 +1,15 @@
 //  quires.cpp : test suite for quires
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2020 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
-#include "common.hpp"
 // enable/disable posit arithmetic exceptions
 #define POSIT_THROW_ARITHMETIC_EXCEPTION 0
 // type definitions for the important types, posit<> and quire<>
-#include "../../posit/posit.hpp"
-#include "../../posit/posit_manipulators.hpp"    // pretty_print
-#include "../../posit/quire.hpp"
+#include <universal/posit/posit>
 // test support functions
-#include "../tests/quire_test_helpers.hpp"
-
+#include "../tests/utils/quire_test_helpers.hpp"
 
 #define MANUAL_TESTING 1
 #define STRESS_TESTING 0
@@ -27,8 +23,24 @@ try {
 	int nrOfFailedTestCases = 0;
 
 	cout << "Quire use cases" << endl;
-
 	std::string tag = "Quire Accumulation failed";
+
+	// generate table of quire sizes for standard posit configurations
+	quire<  8, 0, 7>   quire8  ; cout << "quire<  8,0,7>   " << quire8.total_bits() << " bits\n";
+	quire< 16, 1, 15>  quire16 ; cout << "quire< 16,1,15>  " << quire16.total_bits() << " bits\n";
+	quire< 32, 2, 31>  quire32 ; cout << "quire< 32,2,31>  " << quire32.total_bits() << " bits\n";
+	quire< 64, 3, 63>  quire64 ; cout << "quire< 64,3,63>  " << quire64.total_bits() << " bits\n";
+	quire<128, 4, 127> quire128; cout << "quire<128,4,127> " << quire128.total_bits() << " bits\n";
+	quire<256, 5, 7>   quire256; cout << "quire<256,5,7>   " << quire256.total_bits() << " bits\n";
+
+	/*
+		quire<  8, 0, 0>   25 bits
+		quire< 16, 1, 0>   113 bits
+		quire< 32, 2, 0>   481 bits
+		quire< 64, 3, 0>   1985 bits
+		quire<128, 4, 0>   8065 bits
+		quire<256, 5, 0>   32513 bits
+	*/
 
 #if MANUAL_TESTING
 
@@ -162,14 +174,13 @@ try {
 		q += -v;	std::cout << q << " <- should be zero" << std::endl;
 	}
 
-
-
 	std::cout << std::endl;
 
 #else
 
 	std::cout << "Quire validation" << std::endl;
-	TestQuireAccumulationResult(ValidateQuireAccumulation<8,0,5>(), "quire<8,0,5>");
+	std::vector< posit<8, 0> > v;
+	TestQuireAccumulationResult(ValidateQuireAccumulation<8,0,5>(true, v), "quire<8,0,5>");  // <-- this is segfaulting
 
 #ifdef STRESS_TESTING
 

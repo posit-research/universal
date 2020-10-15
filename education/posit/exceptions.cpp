@@ -1,13 +1,13 @@
 // exception.cpp : special posit/quire arithmetic exceptions to be used by applications
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2019 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
-#include "common.hpp"
+// Configure the posit library to enable arithmetic exceptions
 // enable/disable posit arithmetic exceptions
 #define POSIT_THROW_ARITHMETIC_EXCEPTION 1
-#include <posit>
+#include <universal/posit/posit>
 
 int main()
 try {
@@ -32,7 +32,7 @@ try {
 
 	try {
 		pa = 1.0f;
-		pb.setToNaR();
+		pb.setnar();
 		pc = pa / pb;
 		cout << "Incorrect: division by nar exception didn't fire" << endl;
 	}
@@ -41,7 +41,7 @@ try {
 	}
 
 	try {
-		pa.setToNaR();
+		pa.setnar();
 		pb = 1.0f;
 		pc = pa / pb;
 		cout << "Incorrect: numerator is nar exception didn't fire" << endl;
@@ -51,7 +51,7 @@ try {
 	}
 
 	try {
-		pa.setToNaR();
+		pa.setnar();
 		pb = 1.0f;
 		pc = pa + pb;
 		cout << "Incorrect: operand is nar exception didn't fire" << endl;
@@ -61,7 +61,7 @@ try {
 	}
 
 	try {
-		pa.setToNaR();
+		pa.setnar();
 		pb = 1.0f;
 		pc = pa - pb;
 		cout << "Incorrect: operand is nar exception didn't fire" << endl;
@@ -71,7 +71,7 @@ try {
 	}
 
 	try {
-		pa.setToNaR();
+		pa.setnar();
 		pb = 1.0f;
 		pc = pa * pb;	// TODO: operator *= throws the same exception, but for some reason we can't catch it here
 		cout << "Incorrect: operand is nar exception didn't fire" << endl;

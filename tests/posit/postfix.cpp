@@ -1,17 +1,14 @@
 // postfix.cpp functional tests for postfix operators
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2020 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
-#include "common.hpp"
-#include <vector>
-#include <algorithm>
-
-#include "../../posit/posit.hpp"
-#include "../../posit/posit_manipulators.hpp"
-#include "../tests/test_helpers.hpp"
-#include "../tests/posit_test_helpers.hpp"
+#include "universal/posit/posit.hpp"
+#include "universal/posit/posit_manipulators.hpp"
+// test helpers, such as, ReportTestResults
+#include "../utils/test_helpers.hpp"
+#include "../utils/posit_test_helpers.hpp"
 
 int main(int argc, char** argv)
 try {
@@ -91,19 +88,19 @@ void DoNotDoStuffLikeThis() {
 
 	int nrOfFailedTestCases = 0;
 	p = 0.0f;
-	if (!p.isZero()) {
+	if (!p.iszero()) {
 		cout << "FAIL 1 " << p << endl; nrOfFailedTestCases++;
 	}
 	p = 0.0f; --(--(--(p++)++)++);
-	if (!p.isZero()) {
+	if (!p.iszero()) {
 		cout << "FAIL 2 " << p << endl; nrOfFailedTestCases++;
 	}
 	p = 0.0f; ++(++(++(p--)--)--);
-	if (!p.isZero()) {
+	if (!p.iszero()) {
 		cout << "FAIL 3 " << p << endl; nrOfFailedTestCases++;
 	}
 	p = 0.0f; ----------p++++++++++;
-	if (!p.isZero()) {
+	if (!p.iszero()) {
 		cout << "FAIL 4 " << p << endl; nrOfFailedTestCases++;
 	}
 	p = 0.0f; p++++++++++;

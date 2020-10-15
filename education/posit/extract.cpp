@@ -1,14 +1,9 @@
 // extract.cpp : extracting IEEE floating point components and relate them to posit components
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2019 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
-
-#include "common.hpp"
-#include <posit>
-
-using namespace std;
-using namespace sw::unum;
+#include <universal/posit/posit>
 
 /*
 Laid out as bits, floating point numbers look like this:
@@ -57,37 +52,40 @@ long double frexp(long double in, int* exponent)
 */
 
 template<size_t nbits, size_t es>
-posit<nbits, es> extract(float f) {
-	constexpr size_t fbits = posit<nbits, es>::fbits;
-	posit<nbits, es> p;
+sw::unum::posit<nbits, es> extract(float f) {
+	constexpr size_t fbits = sw::unum::posit<nbits, es>::fbits;
+	sw::unum::posit<nbits, es> p;
 	bool		 _sign;
 	int			 _scale;
 	float		 _fr;
 	uint32_t	 _23b_fraction_without_hidden_bit;
 
-	extract_fp_components(f, _sign, _scale, _fr, _23b_fraction_without_hidden_bit);
-	bitblock<fbits> _fraction = extract_23b_fraction<fbits>(_23b_fraction_without_hidden_bit);
-	value<fbits> v(_sign, _scale, _fraction);
-	return convert(v, p);
+	sw::unum::extract_fp_components(f, _sign, _scale, _fr, _23b_fraction_without_hidden_bit);
+	sw::unum::bitblock<fbits> _fraction = sw::unum::extract_23b_fraction<fbits>(_23b_fraction_without_hidden_bit);
+	sw::unum::value<fbits> v(_sign, _scale, _fraction);
+	return sw::unum::convert(v, p);
 }
 
 template<size_t nbits, size_t es>
-posit<nbits, es> extract(double d) {
-	constexpr size_t fbits = posit<nbits, es>::fbits;
-	posit<nbits, es> p;
+sw::unum::posit<nbits, es> extract(double d) {
+	constexpr size_t fbits = sw::unum::posit<nbits, es>::fbits;
+	sw::unum::posit<nbits, es> p;
 	bool				_sign;
 	int					_scale;
 	double				_fr;
 	unsigned long long	_52b_fraction_without_hidden_bit;
 
-	extract_fp_components(d, _sign, _scale, _fr, _52b_fraction_without_hidden_bit);
-	bitblock<fbits> _fraction = extract_52b_fraction<fbits>(_52b_fraction_without_hidden_bit);
-	value<fbits> v(_sign, _scale, _fraction);
-	return convert(v, p);
+	sw::unum::extract_fp_components(d, _sign, _scale, _fr, _52b_fraction_without_hidden_bit);
+	sw::unum::bitblock<fbits> _fraction = sw::unum::extract_52b_fraction<fbits>(_52b_fraction_without_hidden_bit);
+	sw::unum::value<fbits> v(_sign, _scale, _fraction);
+	return sw::unum::convert(v, p);
 }
 
 int main()
 try {
+	using namespace std;
+	using namespace sw::unum;
+
 	const size_t nbits = 32;
 	const size_t es = 2;
 
@@ -100,7 +98,7 @@ try {
 	unsigned long long	ullfraction;
 	bitblock<nbits>     _fraction;
 
-	cout << "Conversion tests" << endl;
+	cout << "Extraction examples" << endl;
 
 	union {
 		float f;
@@ -116,7 +114,7 @@ try {
 
 	p = extract<nbits, es>(uf.f);
 	cout << "posit<" << nbits << "," << es << "> = " << p << endl;
-	cout << "posit<" << nbits << "," << es << "> = " << components_to_string(p) << endl;
+	cout << "posit<" << nbits << "," << es << "> = " << components(p) << endl;
 
 
 	uf.i = FLOAT_ALTERNATING_BITS_SIGNIFICANT_5 | FLOAT_SIGN_MASK;
@@ -127,7 +125,7 @@ try {
 
 	p = extract<nbits, es>(uf.f);
 	cout << "posit<" << nbits << "," << es << "> = " << p << endl;
-	cout << "posit<" << nbits << "," << es << "> = " << components_to_string(p) << endl;
+	cout << "posit<" << nbits << "," << es << "> = " << components(p) << endl;
 
 	union {
 		double d;
@@ -143,7 +141,7 @@ try {
 
 	p = extract<nbits, es>(ud.d);
 	cout << "posit<" << nbits << "," << es << "> = " << p << endl;
-	cout << "posit<" << nbits << "," << es << "> = " << components_to_string(p) << endl;
+	cout << "posit<" << nbits << "," << es << "> = " << components(p) << endl;
 
 
 	ud.i = DOUBLE_ALTERNATING_BITS_SIGNIFICANT_5 | DOUBLE_SIGN_MASK;
@@ -154,16 +152,16 @@ try {
 
 	p = extract<nbits, es>(uf.f);
 	cout << "posit<" << nbits << "," << es << "> = " << p << endl;
-	cout << "posit<" << nbits << "," << es << "> = " << components_to_string(p) << endl;
+	cout << "posit<" << nbits << "," << es << "> = " << components(p) << endl;
 
 	return EXIT_SUCCESS;
 }
 catch (char const* msg) {
-	cerr << msg << endl;
+	std::cerr << msg << std::endl;
 	return EXIT_FAILURE;
 }
 catch (...) {
-	cerr << "Caught unknown exception" << endl;
+	std::cerr << "Caught unknown exception" << std::endl;
 	return EXIT_FAILURE;
 }
 

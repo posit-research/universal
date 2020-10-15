@@ -1,13 +1,14 @@
 // signalling_nar.cpp : all arithmetic errors become silent signalling NaRs
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2019 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
-#include "common.hpp"
+// Default configuration is to have NaR to be 'silent' and propagate through the computation
+// you can enable it by setting POSIT_THROW_ARITHMETIC_EXCEPTION to 1
 // disable posit arithmetic exceptions
 #define POSIT_THROW_ARITHMETIC_EXCEPTION 0
-#include <posit>
+#include <universal/posit/posit>
 
 int main()
 try {
@@ -32,7 +33,7 @@ try {
 
 	try {
 		pa = 1.0f;
-		pb.setToNaR();
+		pb.setnar();
 		pc = pa / pb;
 		cout << "Correct: division by nar exception didn't fire as it is not enabled" << endl;
 	}
@@ -41,7 +42,7 @@ try {
 	}
 
 	try {
-		pa.setToNaR();
+		pa.setnar();
 		pb = 1.0f;
 		pc = pa / pb;
 		cout << "Correct: numerator is nar exception didn't fire as it is not enabled" << endl;
@@ -51,7 +52,7 @@ try {
 	}
 
 	try {
-		pa.setToNaR();
+		pa.setnar();
 		pb = 1.0f;
 		pc = pa + pb;
 		cout << "Correct: operand is nar exception didn't fire as it is not enabled" << endl;
@@ -61,7 +62,7 @@ try {
 	}
 
 	try {
-		pa.setToNaR();
+		pa.setnar();
 		pb = 1.0f;
 		pc = pa - pb;
 		cout << "Correct: operand is nar exception didn't fire as it is not enabled" << endl;
@@ -71,7 +72,7 @@ try {
 	}
 
 	try {
-		pa.setToNaR();
+		pa.setnar();
 		pb = 1.0f;
 		pc = pa * pb;
 		cout << "Correct: operand is nar exception didn't fire as it is not enabled" << endl;

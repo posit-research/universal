@@ -1,22 +1,22 @@
 // conversion.cpp : functional tests for conversion operators to posit numbers
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2020 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
-
-#include "common.hpp"
 
 // if you want to trace the posit intermediate results
 // #define POSIT_VERBOSE_OUTPUT
 #define POSIT_TRACE_CONVERT
-
+// enable the ability to use literals in binary logic and arithmetic operators
+#define POSIT_ENABLE_LITERALS 1
 // minimum set of include files to reflect source code dependencies
-#include "../../posit/posit.hpp"
-#include "../../posit/posit_decoded.hpp"
-#include "../../posit/posit_functions.hpp"
-#include "../../posit/posit_manipulators.hpp"
-#include "../tests/test_helpers.hpp"
-#include "../tests/posit_test_helpers.hpp"
+#include "universal/posit/posit.hpp"
+#include "universal/posit/posit_decoded.hpp"
+#include "universal/posit/posit_functions.hpp"
+#include "universal/posit/posit_manipulators.hpp"
+// test helpers, such as, ReportTestResults
+#include "../utils/test_helpers.hpp"
+#include "../utils/posit_test_helpers.hpp"
 
 template<size_t nbits, size_t es>
 void GenerateLogicPattern(double input, const sw::unum::posit<nbits, es>& presult, const sw::unum::posit<nbits+1, es>& pnext) {
@@ -53,12 +53,11 @@ void GenerateLogicPatternsForDebug() {
 	sw::unum::posit<nbits + 1, es> pref, pprev, pnext;
 
 	// execute the test
-	int nrOfFailedTests = 0;
 	double minpos = sw::unum::minpos_value<nbits+1, es>();
 	double eps = 1.0e-10;
 	double da, input;
 	sw::unum::posit<nbits, es> pa;
-	std::cout << spec_to_string(pa) << std::endl;
+	std::cout << sw::unum::dynamic_range(pa) << std::endl;
 	for (int i = 0; i < NR_TEST_CASES; i++) {
 		pref.set_raw_bits(i);
 		da = double(pref);
@@ -191,7 +190,7 @@ try {
 	bool bReportIndividualTestCases = false;
 	int nrOfFailedTestCases = 0;
 
-	std::string tag = "Conversion failed";
+	std::string tag = "Conversion test";
 
 #if MANUAL_TESTING
 	// generate individual testcases to hand trace/debug
@@ -213,29 +212,42 @@ try {
 	cout << "----------------\n";
 #endif
 
+	nrOfFailedTestCases += ReportTestResult(ValidateIntegerConversion<3, 0>(tag, true), "posit<3,0>", "conversion");
+	nrOfFailedTestCases += ReportTestResult(ValidateIntegerConversion<4, 0>(tag, true), "posit<4,0>", "conversion");
+	nrOfFailedTestCases += ReportTestResult(ValidateIntegerConversion<5, 0>(tag, true), "posit<5,0>", "conversion");
+	nrOfFailedTestCases += ReportTestResult(ValidateIntegerConversion<6, 0>(tag, true), "posit<6,0>", "conversion");
+	nrOfFailedTestCases += ReportTestResult(ValidateIntegerConversion<7, 0>(tag, true), "posit<7,0>", "conversion");
+	nrOfFailedTestCases += ReportTestResult(ValidateIntegerConversion<8, 0>(tag, true), "posit<8,0>", "conversion");
+	nrOfFailedTestCases += ReportTestResult(ValidateIntegerConversion<9, 0>(tag, true), "posit<9,0>", "conversion");
+
 	nrOfFailedTestCases += ReportTestResult(ValidateConversion<3, 0>(tag, true), "posit<3,0>", "conversion");
-	return 0;
 
 	nrOfFailedTestCases += ReportTestResult(ValidateConversion<4, 1>(tag, true), "posit<4,1>", "conversion");
 	nrOfFailedTestCases += ReportTestResult(ValidateConversion<5, 2>(tag, true), "posit<5,2>", "conversion");
 	nrOfFailedTestCases += ReportTestResult(ValidateConversion<6, 3>(tag, true), "posit<6,3>", "conversion");
-	return 0;
 
 	nrOfFailedTestCases += ReportTestResult(ValidateConversion<4, 0>(tag, true), "posit<4,0>", "conversion");
 	nrOfFailedTestCases += ReportTestResult(ValidateConversion<4, 1>(tag, true), "posit<4,1>", "conversion"); 
 	nrOfFailedTestCases += ReportTestResult(ValidateConversion<5, 0>(tag, true), "posit<5,0>", "conversion");
 	nrOfFailedTestCases += ReportTestResult(ValidateConversion<5, 1>(tag, true), "posit<5,1>", "conversion");
 	nrOfFailedTestCases += ReportTestResult(ValidateConversion<5, 2>(tag, true), "posit<5,2>", "conversion");
-	return 0;
+
 	nrOfFailedTestCases += ReportTestResult(ValidateAddition<6, 0>("Posit<6,0> addition failed: ", bReportIndividualTestCases), "posit<6,0>", "addition");
 	nrOfFailedTestCases += ReportTestResult(ValidateAddition<6, 1>("Posit<6,1> addition failed: ", bReportIndividualTestCases), "posit<6,1>", "addition");
 	nrOfFailedTestCases += ReportTestResult(ValidateAddition<6, 2>("Posit<6,2> addition failed: ", bReportIndividualTestCases), "posit<6,2>", "addition");
 	nrOfFailedTestCases += ReportTestResult(ValidateAddition<6, 3>("Posit<6,3> addition failed: ", bReportIndividualTestCases), "posit<6,3>", "addition");
-	return 0;
 
 #else
 
 	cout << "Posit conversion validation" << endl;
+
+	nrOfFailedTestCases += ReportTestResult(ValidateIntegerConversion<3, 0>(tag, bReportIndividualTestCases), "posit<3,0>", "conversion");
+	nrOfFailedTestCases += ReportTestResult(ValidateIntegerConversion<4, 0>(tag, bReportIndividualTestCases), "posit<4,0>", "conversion");
+	nrOfFailedTestCases += ReportTestResult(ValidateIntegerConversion<5, 0>(tag, bReportIndividualTestCases), "posit<5,0>", "conversion");
+	nrOfFailedTestCases += ReportTestResult(ValidateIntegerConversion<6, 0>(tag, bReportIndividualTestCases), "posit<6,0>", "conversion");
+	nrOfFailedTestCases += ReportTestResult(ValidateIntegerConversion<7, 0>(tag, bReportIndividualTestCases), "posit<7,0>", "conversion");
+	nrOfFailedTestCases += ReportTestResult(ValidateIntegerConversion<8, 0>(tag, bReportIndividualTestCases), "posit<8,0>", "conversion");
+	nrOfFailedTestCases += ReportTestResult(ValidateIntegerConversion<9, 0>(tag, bReportIndividualTestCases), "posit<9,0>", "conversion");
 
 	nrOfFailedTestCases += ReportTestResult(ValidateConversion< 3, 0>(tag, bReportIndividualTestCases), "posit<3,0>", "conversion");
 	nrOfFailedTestCases += ReportTestResult(ValidateConversion< 4, 0>(tag, bReportIndividualTestCases), "posit<4,0>", "conversion");

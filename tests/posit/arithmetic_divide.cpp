@@ -1,21 +1,30 @@
-// arithmetic_divide.cpp: functional tests for division
+// arithmetic_divide.cpp: functional tests for posit division
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2020 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
-#include "common.hpp"
-
-// when you define POSIT_VERBOSE_OUTPUT executing an DIV the code will print intermediate results
+// Configure the posit template environment
+// first: enable general or specialized posit configurations
+//#define POSIT_FAST_SPECIALIZATION
+// second: enable/disable posit arithmetic exceptions
+#define POSIT_THROW_ARITHMETIC_EXCEPTION 0
+// third: enable tracing 
+// when you define POSIT_VERBOSE_OUTPUT executing an ADD the code will print intermediate results
 //#define POSIT_VERBOSE_OUTPUT
 #define POSIT_TRACE_DIV
+
 // minimum set of include files to reflect source code dependencies
-// enable/disable posit arithmetic exceptions
-#define POSIT_THROW_ARITHMETIC_EXCEPTION 0
-#include "../../posit/posit.hpp"
-#include "../../posit/posit_manipulators.hpp"
-#include "../tests/test_helpers.hpp"
-#include "../tests/posit_test_helpers.hpp"
+#include "universal/posit/posit.hpp"
+#include "universal/posit/numeric_limits.hpp"
+#include "universal/posit/specializations.hpp"
+// posit type manipulators such as pretty printers
+#include "universal/posit/posit_manipulators.hpp"
+#include "universal/posit/math_functions.hpp"
+// test helpers, such as, ReportTestResults
+#include "../utils/test_helpers.hpp"
+#include "../utils/posit_math_helpers.hpp"
+#include "../utils/posit_test_randoms.hpp"
 
 // generate specific test case that you can trace with the trace conditions in posit.h
 // for most bugs they are traceable with _trace_conversion and _trace_add
@@ -206,18 +215,23 @@ try {
 
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<3, 0>(tag, bReportIndividualTestCases), "posit<3,0>", "division");
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<3, 1>(tag, bReportIndividualTestCases), "posit<3,1>", "division");
+	nrOfFailedTestCases += ReportTestResult(ValidateDivision<3, 2>(tag, bReportIndividualTestCases), "posit<3,2>", "division");
+	nrOfFailedTestCases += ReportTestResult(ValidateDivision<3, 3>(tag, bReportIndividualTestCases), "posit<3,3>", "division");
 
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<4, 0>(tag, bReportIndividualTestCases), "posit<4,0>", "division");
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<4, 1>(tag, bReportIndividualTestCases), "posit<4,1>", "division");
+	nrOfFailedTestCases += ReportTestResult(ValidateDivision<4, 2>(tag, bReportIndividualTestCases), "posit<4,2>", "division");
 
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<5, 0>(tag, bReportIndividualTestCases), "posit<5,0>", "division");
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<5, 1>(tag, bReportIndividualTestCases), "posit<5,1>", "division");
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<5, 2>(tag, bReportIndividualTestCases), "posit<5,2>", "division");
+	nrOfFailedTestCases += ReportTestResult(ValidateDivision<5, 3>(tag, bReportIndividualTestCases), "posit<5,3>", "division");
 
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<6, 0>(tag, bReportIndividualTestCases), "posit<6,0>", "division");
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<6, 1>(tag, bReportIndividualTestCases), "posit<6,1>", "division");
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<6, 2>(tag, bReportIndividualTestCases), "posit<6,2>", "division");
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<6, 3>(tag, bReportIndividualTestCases), "posit<6,3>", "division");
+	nrOfFailedTestCases += ReportTestResult(ValidateDivision<6, 4>(tag, bReportIndividualTestCases), "posit<6,4>", "division");
 
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<7, 0>(tag, bReportIndividualTestCases), "posit<7,0>", "division");
 	nrOfFailedTestCases += ReportTestResult(ValidateDivision<7, 1>(tag, bReportIndividualTestCases), "posit<7,1>", "division");

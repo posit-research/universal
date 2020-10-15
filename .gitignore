@@ -1,5 +1,9 @@
+# identity files
+.gitconfig
+
 # Build directory
 build
+build_clang
 
 # CLion IDE config caches
 .idea
@@ -10,6 +14,9 @@ cmake-build-debug
 
 # VS IDE config caches
 .vs
+
+# VSCode IDE config caches
+.vscode
 
 # KDE IDE config caches
 .kdev4

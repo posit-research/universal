@@ -1,21 +1,30 @@
-// arithmetic_multiply.cpp: functional tests for multiplication
+// arithmetic_multiply.cpp: functional tests for posit multiplication
 //
-// Copyright (C) 2017-2018 Stillwater Supercomputing, Inc.
+// Copyright (C) 2017-2020 Stillwater Supercomputing, Inc.
 //
 // This file is part of the universal numbers project, which is released under an MIT Open Source license.
 
-#include "common.hpp"
-
-// when you define POSIT_VERBOSE_OUTPUT executing an MUL the code will print intermediate results
+// Configure the posit template environment
+// first: enable general or specialized specialized posit configurations
+//#define POSIT_FAST_SPECIALIZATION
+// second: enable/disable posit arithmetic exceptions
+#define POSIT_THROW_ARITHMETIC_EXCEPTION 0
+// third: enable tracing 
+// when you define POSIT_VERBOSE_OUTPUT executing a MUL the code will print intermediate results
 //#define POSIT_VERBOSE_OUTPUT
 #define POSIT_TRACE_MUL
+
 // minimum set of include files to reflect source code dependencies
-// enable/disable posit arithmetic exceptions
-#define POSIT_THROW_ARITHMETIC_EXCEPTION 0
-#include "../../posit/posit.hpp"
-#include "../../posit/posit_manipulators.hpp"
-#include "../tests/test_helpers.hpp"
-#include "../tests/posit_test_helpers.hpp"
+#include "universal/posit/posit.hpp"
+#include "universal/posit/numeric_limits.hpp"
+#include "universal/posit/specializations.hpp"
+// posit type manipulators such as pretty printers
+#include "universal/posit/posit_manipulators.hpp"
+#include "universal/posit/math_functions.hpp"
+// test helpers, such as, ReportTestResults
+#include "../utils/test_helpers.hpp"
+#include "../utils/posit_math_helpers.hpp"
+#include "../utils/posit_test_randoms.hpp"
 
 // generate specific test case that you can trace with the trace conditions in posit.h
 // for most bugs they are traceable with _trace_conversion and _trace_mul
@@ -68,7 +77,7 @@ b61e2f1f fffffffe 00000002 00000003
 fffffffe b61e2f1f 00000002 00000003
 */
 void DifficultRoundingCases() {
-	sw::unum::posit<32, 2> a, b, bad, pref;
+	sw::unum::posit<32, 2> a, b, pref;
 	std::vector<uint32_t> cases = {
 		0x00000002, 0x93ff6977, 0xfffffffa, 0xfffffff9,
 		0x00000002, 0xb61e2f1f, 0xfffffffe, 0xfffffffd,
@@ -152,18 +161,23 @@ try {
 
 	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<3, 0>(tag, bReportIndividualTestCases), "posit<3,0>", "multiplication");
 	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<3, 1>(tag, bReportIndividualTestCases), "posit<3,1>", "multiplication");
+	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<3, 2>(tag, bReportIndividualTestCases), "posit<3,2>", "multiplication");
+	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<3, 3>(tag, bReportIndividualTestCases), "posit<3,3>", "multiplication");
 
 	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<4, 0>(tag, bReportIndividualTestCases), "posit<4,0>", "multiplication");
 	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<4, 1>(tag, bReportIndividualTestCases), "posit<4,1>", "multiplication");
+	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<4, 2>(tag, bReportIndividualTestCases), "posit<4,2>", "multiplication");
 
 	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<5, 0>(tag, bReportIndividualTestCases), "posit<5,0>", "multiplication");
 	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<5, 1>(tag, bReportIndividualTestCases), "posit<5,1>", "multiplication");
 	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<5, 2>(tag, bReportIndividualTestCases), "posit<5,2>", "multiplication");
+	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<5, 3>(tag, bReportIndividualTestCases), "posit<5,3>", "multiplication");
 
 	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<6, 0>(tag, bReportIndividualTestCases), "posit<6,0>", "multiplication");
 	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<6, 1>(tag, bReportIndividualTestCases), "posit<6,1>", "multiplication");
 	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<6, 2>(tag, bReportIndividualTestCases), "posit<6,2>", "multiplication");
 	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<6, 3>(tag, bReportIndividualTestCases), "posit<6,3>", "multiplication");
+	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<6, 4>(tag, bReportIndividualTestCases), "posit<6,4>", "multiplication");
 
 	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<7, 0>(tag, bReportIndividualTestCases), "posit<7,0>", "multiplication");
 	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<7, 1>(tag, bReportIndividualTestCases), "posit<7,1>", "multiplication");
@@ -178,10 +192,10 @@ try {
 	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<8, 4>(tag, bReportIndividualTestCases), "posit<8,4>", "multiplication");
 	nrOfFailedTestCases += ReportTestResult(ValidateMultiplication<8, 5>(tag, bReportIndividualTestCases), "posit<8,5>", "multiplication");
 
-	nrOfFailedTestCases += ReportTestResult(ValidateThroughRandoms<16, 1>(tag, bReportIndividualTestCases, OPCODE_MUL, 1000), "posit<16,1>", "multiplication");
-	nrOfFailedTestCases += ReportTestResult(ValidateThroughRandoms<24, 1>(tag, bReportIndividualTestCases, OPCODE_MUL, 1000), "posit<24,1>", "multiplication");
-	nrOfFailedTestCases += ReportTestResult(ValidateThroughRandoms<32, 1>(tag, bReportIndividualTestCases, OPCODE_MUL, 1000), "posit<32,1>", "multiplication");
-	nrOfFailedTestCases += ReportTestResult(ValidateThroughRandoms<32, 2>(tag, bReportIndividualTestCases, OPCODE_MUL, 1000), "posit<32,2>", "multiplication");
+	nrOfFailedTestCases += ReportTestResult(ValidateBinaryOperatorThroughRandoms<16, 1>(tag, bReportIndividualTestCases, OPCODE_MUL, 1000), "posit<16,1>", "multiplication");
+	nrOfFailedTestCases += ReportTestResult(ValidateBinaryOperatorThroughRandoms<24, 1>(tag, bReportIndividualTestCases, OPCODE_MUL, 1000), "posit<24,1>", "multiplication");
+	nrOfFailedTestCases += ReportTestResult(ValidateBinaryOperatorThroughRandoms<32, 1>(tag, bReportIndividualTestCases, OPCODE_MUL, 1000), "posit<32,1>", "multiplication");
+	nrOfFailedTestCases += ReportTestResult(ValidateBinaryOperatorThroughRandoms<32, 2>(tag, bReportIndividualTestCases, OPCODE_MUL, 1000), "posit<32,2>", "multiplication");
 
 
 #if STRESS_TESTING
